@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "viator": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/index.js"],
+      "env": {
+        "VIATOR_API_KEY": "${VIATOR_API_KEY}",
+        "VIATOR_LANGUAGE": "${VIATOR_LANGUAGE}",
+        "VIATOR_CACHE_TTL": "${VIATOR_CACHE_TTL}",
+        "VIATOR_STATIC_CACHE_TTL": "${VIATOR_STATIC_CACHE_TTL}"
+      }
+    }
+  }
+}

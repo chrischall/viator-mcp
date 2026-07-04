@@ -1,0 +1,50 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.chrischall/viator-mcp",
+  "description": "Search Viator tours and activities — products, availability, attractions, destinations.",
+  "repository": {
+    "url": "https://github.com/chrischall/viator-mcp",
+    "source": "github"
+  },
+  "version": "0.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@chrischall/viator-mcp",
+      "version": "0.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "VIATOR_API_KEY",
+          "description": "Viator Partner API key (exp-api-key) — free Basic Access affiliate signup at partnerresources.viator.com",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "VIATOR_LANGUAGE",
+          "description": "Accept-Language for response text, e.g. en-US, es, fr, de, ja (default en-US)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "VIATOR_CACHE_TTL",
+          "description": "Seconds to cache identical read responses (default 60; 0 disables)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "VIATOR_STATIC_CACHE_TTL",
+          "description": "Seconds to cache reference data — destinations, tags, locations, rates (default 3600; 0 disables)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "name": "@chrischall/viator-mcp",
+  "version": "0.0.0",
+  "mcpName": "io.github.chrischall/viator-mcp",
+  "description": "Viator Partner API MCP server for Claude — search tours, activities and experiences, product details, availability schedules, attractions, and destinations. Developed and maintained by AI (Claude Code).",
+  "author": "Claude Code (AI) <https://www.anthropic.com/claude>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrischall/viator-mcp.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "viator",
+    "tours",
+    "activities",
+    "travel",
+    "experiences",
+    "attractions"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "viator-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    ".claude-plugin",
+    "SKILL.md",
+    ".mcp.json",
+    "server.json"
+  ],
+  "scripts": {
+    "build": "tsc && npm run bundle",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --format=esm --external:dotenv --outfile=dist/bundle.js",
+    "dev": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@chrischall/mcp-utils": "^0.10.5",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "dotenv": "^17.4.0",
+    "zod": "^4.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@vitest/coverage-v8": "^4.1.2",
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

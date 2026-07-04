@@ -1,0 +1,127 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/dxt/main/dist/mcpb-manifest.schema.json",
+  "manifest_version": "0.3",
+  "name": "viator-mcp",
+  "display_name": "Viator",
+  "version": "0.0.0",
+  "description": "Search Viator tours, activities and experiences — products, pricing, availability schedules, attractions, and destinations via the Viator Partner API",
+  "author": {
+    "name": "Chris Chall",
+    "email": "chris.c.hall@gmail.com",
+    "url": "https://github.com/chrischall"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chrischall/viator-mcp"
+  },
+  "homepage": "https://github.com/chrischall/viator-mcp",
+  "support": "https://github.com/chrischall/viator-mcp/issues",
+  "license": "MIT",
+  "keywords": [
+    "viator",
+    "tours",
+    "activities",
+    "travel",
+    "experiences",
+    "attractions",
+    "mcp"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/bundle.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/bundle.js"
+      ],
+      "env": {
+        "VIATOR_API_KEY": "${user_config.viator_api_key}",
+        "VIATOR_LANGUAGE": "${user_config.viator_language}",
+        "VIATOR_CACHE_TTL": "${user_config.viator_cache_ttl}",
+        "VIATOR_STATIC_CACHE_TTL": "${user_config.viator_static_cache_ttl}"
+      }
+    }
+  },
+  "user_config": {
+    "viator_api_key": {
+      "type": "string",
+      "title": "Viator Partner API Key",
+      "description": "Your Viator Partner API key (exp-api-key). Sign up as a Viator affiliate — Basic Access is free (partnerresources.viator.com).",
+      "required": true,
+      "sensitive": true
+    },
+    "viator_language": {
+      "type": "string",
+      "title": "Language",
+      "description": "Accept-Language for response text, e.g. en-US, es, fr, de, ja (default: en-US)",
+      "required": false,
+      "sensitive": false
+    },
+    "viator_cache_ttl": {
+      "type": "string",
+      "title": "Read Cache TTL (seconds)",
+      "description": "Cache identical search/read responses for this many seconds to stay under Viator's rate limits (default: 60; set 0 to disable)",
+      "required": false,
+      "sensitive": false
+    },
+    "viator_static_cache_ttl": {
+      "type": "string",
+      "title": "Static Cache TTL (seconds)",
+      "description": "Longer cache TTL for reference data — destinations, tags, locations, exchange rates (default: 3600; set 0 to disable)",
+      "required": false,
+      "sensitive": false
+    }
+  },
+  "tools": [
+    {
+      "name": "vt_search_products",
+      "description": "Search tours/activities with structured filters (destination, tags, price, dates, rating)"
+    },
+    {
+      "name": "vt_get_product",
+      "description": "Get full details for one product by product code"
+    },
+    {
+      "name": "vt_list_product_tags",
+      "description": "List all product tags (id, hierarchy, names per locale)"
+    },
+    {
+      "name": "vt_search_attractions",
+      "description": "List attractions in a destination"
+    },
+    {
+      "name": "vt_get_attraction",
+      "description": "Get details for one attraction by id"
+    },
+    {
+      "name": "vt_get_availability_schedule",
+      "description": "Get availability + pricing schedule for a product"
+    },
+    {
+      "name": "vt_search_freetext",
+      "description": "Free-text search across products, attractions, destinations"
+    },
+    {
+      "name": "vt_list_destinations",
+      "description": "List all Viator destinations (ids, hierarchy, metadata)"
+    },
+    {
+      "name": "vt_get_locations",
+      "description": "Resolve location references to names/addresses/coordinates"
+    },
+    {
+      "name": "vt_get_exchange_rates",
+      "description": "Get exchange rates between supported currencies"
+    }
+  ],
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=22.5.0"
+    }
+  }
+}

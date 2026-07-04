@@ -1,0 +1,37 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "viator-mcp",
+  "owner": {
+    "name": "Chris Hall",
+    "email": "chris.c.hall@gmail.com"
+  },
+  "metadata": {
+    "description": "MCP server for the Viator Partner API — search tours and activities, product details, availability schedules, attractions, and destinations",
+    "version": "0.0.0"
+  },
+  "plugins": [
+    {
+      "name": "viator-mcp",
+      "displayName": "Viator",
+      "source": "./",
+      "description": "Search Viator tours, activities and experiences — products, pricing, availability schedules, attractions, and destinations via the Viator Partner API",
+      "version": "0.0.0",
+      "author": {
+        "name": "Chris Hall"
+      },
+      "homepage": "https://github.com/chrischall/viator-mcp",
+      "repository": "https://github.com/chrischall/viator-mcp",
+      "license": "MIT",
+      "keywords": [
+        "viator",
+        "tours",
+        "activities",
+        "travel",
+        "experiences",
+        "attractions",
+        "mcp"
+      ],
+      "category": "data"
+    }
+  ]
+}
