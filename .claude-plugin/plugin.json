@@ -1,7 +1,7 @@
 {
   "name": "viator-mcp",
   "displayName": "Viator",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "MCP server for the Viator Partner API — search tours and activities, product details, availability schedules, attractions, and destinations",
   "author": {
     "name": "Chris Hall",
