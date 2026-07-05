@@ -44,7 +44,7 @@ key; the error surfaces on the first tool call (`requireKey()`).
 - `src/tools/*.ts` — `registerXxxTools(server)` per area; all read-only
 - `src/tools/shared.ts` — zod atoms (ProductCode path-charset guard), currency/sort enums,
   pagination, `prune`/`range`, compact ProductSummary projection (drift-fallback to raw)
-- `docs/VIATOR-API.md` — pinned API shapes; **VERIFY** markers = not yet confirmed live
+- `docs/VIATOR-API.md` — pinned API shapes, live-verified 2026-07-05 (sandbox, Basic Access key)
 - `tests/` — vitest, network fully mocked; `server-boot.test.ts` spawns the real built artifacts
 
 ## Conventions
@@ -56,5 +56,6 @@ key; the error surfaces on the first tool call (`requireKey()`).
 - Never commit secrets; `.env` is gitignored.
 - Compact projections key off documented fields only; on drift, warn to stderr and
   return the raw response (never an empty projection).
-- Live verification is **blocked on a real key** — see the checklist at the bottom of
-  docs/VIATOR-API.md. Run it before trusting the VERIFY-marked enums/caps.
+- Live verification: `node scripts/live-probe.mjs` probes all 10 endpoints through the built
+  client. Sandbox keys need `VIATOR_API_BASE_URL=https://api.sandbox.viator.com/partner`;
+  results and quirks (count clamping vs 400s) are recorded in docs/VIATOR-API.md.

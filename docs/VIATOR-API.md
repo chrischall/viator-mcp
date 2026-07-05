@@ -1,8 +1,8 @@
 # Viator Partner API v2 — Basic Access surface (pinned)
 
 Extracted from https://docs.viator.com/partner-api/technical/ (July 2026). This file pins the
-request/response shapes this server is coded against. Re-verify against a live key before
-trusting any field marked **VERIFY**.
+request/response shapes this server is coded against. **Live-verified 2026-07-05** against the
+sandbox API (`api.sandbox.viator.com`) with a Basic Access key — see the checklist at the bottom.
 
 ## Global
 
@@ -46,13 +46,14 @@ Not in Basic Access (do not build): `/products/modified-since`, `/products/bulk`
 Body: `{ filtering, sorting?, pagination?, currency }`
 
 - `filtering` (required): `destination` (string id), `tags` (int[]), `flags` (string[]:
-  `LIKELY_TO_SELL_OUT`, `FREE_CANCELLATION`, `PRIVATE_TOUR`, `NEW_ON_VIATOR`, `SKIP_THE_LINE`, **VERIFY** full enum),
+  `LIKELY_TO_SELL_OUT`, `FREE_CANCELLATION`, `PRIVATE_TOUR`, `NEW_ON_VIATOR`, `SKIP_THE_LINE` per docs),
   `lowestPrice`/`highestPrice` (numbers in `currency`), `startDate`/`endDate` (`YYYY-MM-DD`),
   `includeAutomaticTranslations` (bool), `confirmationType`, `durationInMinutes` `{from,to}`,
-  `rating` `{from,to}` (0–5).
+  `rating` `{from,to}` (0–5). Flags `FREE_CANCELLATION` + `LIKELY_TO_SELL_OUT` verified live.
 - `sorting`: `{ sort, order }`; sort ∈ `DEFAULT|PRICE|TRAVELER_RATING|ITINERARY_DURATION|DATE_ADDED`
-  (**VERIFY** — from OpenAPI spec, not confirmed live), order ∈ `ASCENDING|DESCENDING`.
-- `pagination`: `{ start, count }` — 1-based start; count cap 50 (**VERIFY**).
+  (all five verified live; unknown values → 400 "Unknown search sorting field"), order ∈ `ASCENDING|DESCENDING`.
+- `pagination`: `{ start, count }` — 1-based start; count above 50 is silently CLAMPED to 50
+  (no 400) — verified live.
 - `currency` (required): one of `AED ARS AUD BRL CAD CHF CLP CNY COP DKK EUR FJD GBP HKD IDR ILS
   INR ISK JPY KRW MXN MYR NOK NZD PEN PHP PLN RUB SEK SGD THB TRY TWD USD VND ZAR`.
 
@@ -79,8 +80,9 @@ No params; no Accept-Language (all locales at once). Response:
 
 ## POST /attractions/search
 
-Body: `{ destinationId (required, int), sorting? { sort: DEFAULT|ALPHABETICAL|REVIEW_AVG_RATING (**VERIFY**) },
-pagination? { start, count } }` — count cap 30 (**VERIFY**).
+Body: `{ destinationId (required, int), sorting? { sort: DEFAULT|ALPHABETICAL|REVIEW_AVG_RATING (all three
+verified live) }, pagination? { start, count } }` — count above 30 → 400 "pagination.count must be
+between 1 and 30" (verified live; NOT clamped, unlike /products/search).
 Response: `{ attractions: AttractionDetails[], totalCount }`.
 
 ## GET /attractions/{attraction-id}
@@ -104,7 +106,7 @@ Body: `{ searchTerm (required), searchTypes (required, 1..3 of { searchType:
 PRODUCTS|ATTRACTIONS|DESTINATIONS, pagination{start,count} }), currency (required),
 productFiltering? { destination, dateRange{from,to}, price{from,to}, rating{from,to},
 durationInMinutes{from,to}, tags[], flags[], includeAutomaticTranslations },
-productSorting? { sort, order } }`.
+productSorting? { sort, order } }`. Products `count: 50` accepted (verified live).
 Response: per-type blocks `{ products?/attractions?/destinations?: { totalCount, results[] } }`;
 product results are ProductSummary; destination results `{ id, name, parentDestinationId, ... }`;
 attraction results `{ id, name, primaryDestinationId, productsCount, reviews, images, ... }`.
@@ -129,11 +131,17 @@ Query: `campaign-value?`. Response: `{ destinations: [{ destinationId, name, typ
 timeZone, iataCodes[], countryCallingCode, languages[], center{latitude,longitude} }], totalCount }`.
 Cache weekly.
 
-## Live-verification checklist (blocked on a VIATOR_API_KEY)
+## Live-verification checklist (completed 2026-07-05, sandbox + Basic Access key)
 
-- [ ] Sort enums for `/products/search`, `/search/freetext`, `/attractions/search`
-- [ ] Pagination `count` caps (50 / 30) and behavior past the cap
-- [ ] `flags` filter enum
-- [ ] Whether sandbox keys work against production-base tools (this server defaults to production)
-- [ ] Probe each of the 10 endpoints through the built client (`node scripts/live-probe.mjs`),
-      spacing calls ~4s apart to respect the 10s rolling windows
+- [x] Sort enums: products all 5 values OK (bogus → 400 "Unknown search sorting field");
+      attractions all 3 values OK
+- [x] Pagination caps: /products/search count>50 silently clamps to 50; /attractions/search
+      count>30 → 400 "pagination.count must be between 1 and 30"; freetext products count=50 OK
+- [x] `flags` filter: FREE_CANCELLATION + LIKELY_TO_SELL_OUT combined filter works
+- [x] Sandbox keys do NOT work against production (401 "Invalid API Key") — use
+      VIATOR_API_BASE_URL=https://api.sandbox.viator.com/partner. New accounts get ONLY a
+      sandbox key; production keys are generated separately (portal → Affiliate API → Get key).
+      A fresh key can take up to 24h to activate; a restricted (unverified) account 401s on
+      every host until identity verification completes.
+- [x] All 10 endpoints probed through the built client (`node scripts/live-probe.mjs`);
+      response shapes matched this doc, incl. the compact projection on real data
