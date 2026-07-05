@@ -39,6 +39,7 @@ All tools are read-only. `vt_search_products` and `vt_search_freetext` accept `c
 | Variable | Required | Description |
 | --- | --- | --- |
 | `VIATOR_API_KEY` | yes | Viator Partner API key (sent as `exp-api-key`) |
+| `VIATOR_API_BASE_URL` | no | API host (default production; set `https://api.sandbox.viator.com/partner` for a sandbox key) |
 | `VIATOR_LANGUAGE` | no | `Accept-Language` for response text (default `en-US`) |
 | `VIATOR_CACHE_TTL` | no | Seconds to cache identical reads (default `60`; `0` disables) |
 | `VIATOR_STATIC_CACHE_TTL` | no | Seconds to cache reference data — destinations, tags, locations, exchange rates (default `3600`) |

@@ -7,7 +7,9 @@ import { loadDotenvSafely, readEnvVar, formatApiError, McpToolError } from '@chr
 const __dirname = dirname(fileURLToPath(import.meta.url));
 await loadDotenvSafely({ path: join(__dirname, '..', '.env'), override: false });
 
-const BASE_URL = 'https://api.viator.com/partner';
+// Production by default; point VIATOR_API_BASE_URL at the sandbox
+// (https://api.sandbox.viator.com/partner) to test with a sandbox key.
+const DEFAULT_BASE_URL = 'https://api.viator.com/partner';
 const SERVICE = 'Viator Partner API';
 // Every call must pin the API version via the Accept header or Viator answers
 // 400. POST bodies use the same versioned media type.
@@ -40,6 +42,8 @@ function readCacheTtlMs(envVar: string, defaultMs: number): number {
 export interface ViatorClientOptions {
   /** API key; when the property is absent, read from VIATOR_API_KEY. */
   apiKey?: string;
+  /** Base URL; default VIATOR_API_BASE_URL or the production host. */
+  baseUrl?: string;
   /** Accept-Language value; default VIATOR_LANGUAGE or en-US. */
   language?: string;
   fetchImpl?: typeof fetch;
@@ -52,6 +56,7 @@ export interface ViatorClientOptions {
 export class ViatorClient {
   private readonly apiKey: string | null;
   private readonly configError: Error | null;
+  private readonly baseUrl: string;
   private readonly language: string;
   private readonly fetchImpl: typeof fetch;
   private readonly cacheTtlMs: number;
@@ -71,6 +76,7 @@ export class ViatorClient {
     this.cacheTtlMs = opts.cacheTtlMs ?? readCacheTtlMs('VIATOR_CACHE_TTL', DEFAULT_CACHE_TTL_MS);
     this.staticCacheTtlMs =
       opts.staticCacheTtlMs ?? readCacheTtlMs('VIATOR_STATIC_CACHE_TTL', DEFAULT_STATIC_CACHE_TTL_MS);
+    this.baseUrl = (opts.baseUrl ?? readEnvVar('VIATOR_API_BASE_URL') ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
     this.language = opts.language ?? readEnvVar('VIATOR_LANGUAGE') ?? 'en-US';
     // `'apiKey' in opts` (not `?? readEnvVar(...)`) so tests can force the
     // missing-key path with an explicit undefined even when .env has a key.
@@ -128,7 +134,7 @@ export class ViatorClient {
       init.body = JSON.stringify(body);
     }
 
-    let res = await this.fetchImpl(`${BASE_URL}${path}`, init);
+    let res = await this.fetchImpl(`${this.baseUrl}${path}`, init);
     // Viator signals rate limiting with 429 (per-endpoint window) and 503
     // (system-wide concurrency), both carrying Retry-After seconds. Honor it
     // once, capped so a tool call never sleeps unreasonably long.
@@ -139,7 +145,7 @@ export class ViatorClient {
         MAX_RETRY_AFTER_MS,
       );
       await this.sleep(delayMs);
-      res = await this.fetchImpl(`${BASE_URL}${path}`, init);
+      res = await this.fetchImpl(`${this.baseUrl}${path}`, init);
     }
 
     const text = await res.text();
