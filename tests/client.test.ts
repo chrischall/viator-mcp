@@ -128,6 +128,24 @@ describe('ViatorClient', () => {
     await expect(client.post('/products/search', {})).rejects.toThrow(/Invalid destination id/);
   });
 
+  it('honors a baseUrl override (e.g. the sandbox host)', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonRes(200, {}));
+    const client = makeClient(fetchImpl as unknown as typeof fetch, {
+      baseUrl: 'https://api.sandbox.viator.com/partner',
+    });
+    await client.get('/destinations');
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://api.sandbox.viator.com/partner/destinations');
+  });
+
+  it('strips a trailing slash from the baseUrl override', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonRes(200, {}));
+    const client = makeClient(fetchImpl as unknown as typeof fetch, {
+      baseUrl: 'https://api.sandbox.viator.com/partner/',
+    });
+    await client.get('/destinations');
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://api.sandbox.viator.com/partner/destinations');
+  });
+
   it('reads language from the constructor and applies it to Accept-Language', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonRes(200, {}));
     const client = makeClient(fetchImpl as unknown as typeof fetch, { language: 'es' });

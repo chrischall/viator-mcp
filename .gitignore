@@ -3,6 +3,7 @@ dist/
 coverage/
 .env
 .env.*
+!.env.example
 *.tgz
 *.tsbuildinfo
 *.mcpb
