@@ -1,6 +1,6 @@
 {
   "name": "@chrischall/viator-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "mcpName": "io.github.chrischall/viator-mcp",
   "description": "Viator Partner API MCP server for Claude — search tours, activities and experiences, product details, availability schedules, attractions, and destinations. Developed and maintained by AI (Claude Code).",
   "author": "Claude Code (AI) <https://www.anthropic.com/claude>",
