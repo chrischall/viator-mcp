@@ -3,7 +3,7 @@
   "manifest_version": "0.3",
   "name": "viator-mcp",
   "display_name": "Viator",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Search Viator tours, activities and experiences — products, pricing, availability schedules, attractions, and destinations via the Viator Partner API",
   "author": {
     "name": "Chris Chall",
