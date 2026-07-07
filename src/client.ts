@@ -71,6 +71,9 @@ export class ViatorClient {
     const cacheTtlMs = opts.cacheTtlMs ?? readTtlMsEnv('VIATOR_CACHE_TTL', DEFAULT_CACHE_TTL_MS);
     const staticCacheTtlMs =
       opts.staticCacheTtlMs ?? readTtlMsEnv('VIATOR_STATIC_CACHE_TTL', DEFAULT_STATIC_CACHE_TTL_MS);
+    // The max-entries bound is inherited from mcp-utils' createResponseCache
+    // (default RESPONSE_CACHE_MAX_ENTRIES = 256, expired-first-then-oldest
+    // eviction), replacing the removed local CACHE_MAX_ENTRIES.
     this.cache = createResponseCache({ ttlMs: { dynamic: cacheTtlMs, static: staticCacheTtlMs }, now });
     this.baseUrl = (opts.baseUrl ?? readEnvVar('VIATOR_API_BASE_URL') ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
     this.language = opts.language ?? readEnvVar('VIATOR_LANGUAGE') ?? 'en-US';
