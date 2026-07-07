@@ -23,6 +23,7 @@ endpoints are mostly **POSTs** (cached by path+body) and 429/503 responses carry
 
 ```
 VIATOR_API_KEY=<key>             # Required. Free Basic Access signup: partnerresources.viator.com
+VIATOR_API_BASE_URL=<url>        # Optional. API host (default production; sandbox: https://api.sandbox.viator.com/partner)
 VIATOR_LANGUAGE=<code>           # Optional. Accept-Language (default en-US)
 VIATOR_CACHE_TTL=<secs>          # Optional. Read-cache TTL (default 60; 0 disables)
 VIATOR_STATIC_CACHE_TTL=<secs>   # Optional. Reference-data cache TTL (default 3600; 0 disables)
