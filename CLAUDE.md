@@ -60,3 +60,9 @@ key; the error surfaces on the first tool call (`requireKey()`).
 - Live verification: `node scripts/live-probe.mjs` probes all 10 endpoints through the built
   client. Sandbox keys need `VIATOR_API_BASE_URL=https://api.sandbox.viator.com/partner`;
   results and quirks (count clamping vs 400s) are recorded in docs/VIATOR-API.md.
+
+## Pull requests & release notes
+
+Branch + PR, even for solo work. The repo squash-merges and release-please parses the PR title, so it **MUST be a Conventional Commit** (`feat:`/`fix:`/…); apply one release-notes label per PR (`enhancement`, `bug`, `dependencies`, `documentation`, etc.).
+
+**Exception for first-party dependency bumps.** When bumping a package we own (`@chrischall/mcp-utils`, `@chrischall/realty-core`, `@fetchproxy/server` — anything published from a chrischall-owned repo), label the PR `enhancement` or `bug` instead of `dependencies`, and use the matching Conventional-Commit prefix (`feat:` or `fix:`) instead of `chore:`/`build(deps):`. Those bumps deliver real product fixes or features through us, so they should drive a release-please version bump and show up under Features/Bug Fixes in the release notes — not get hidden under "Dependencies" (which doesn't trigger a release).
