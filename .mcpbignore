@@ -40,6 +40,9 @@ plugin.json
 .claude-plugin/
 .mcp.json
 skills/
+# Root SKILL.md is a CI staging copy (release-please.yml copies
+# skills/viator-mcp/SKILL.md to the root for the shared mcp-publish action)
+SKILL.md
 
 # Repo-local maintenance scripts
 scripts/

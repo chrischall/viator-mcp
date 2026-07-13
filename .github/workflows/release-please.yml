@@ -48,6 +48,14 @@ jobs:
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
 
+      # The shared mcp-publish action packages and ClawHub-publishes a
+      # root-level SKILL.md (it has no skill-path input). The skill lives at
+      # skills/viator-mcp/SKILL.md (Claude Code plugin layout), so stage a
+      # root copy for the action; .mcpbignore excludes the copy from the
+      # .mcpb bundle. Drop this step if mcp-publish learns skills/*/SKILL.md.
+      - name: Stage skill for mcp-publish
+        run: cp skills/viator-mcp/SKILL.md SKILL.md
+
       - uses: chrischall/workflows/.github/actions/mcp-publish@main
         with:
           version: ${{ needs.release-please.outputs.version }}
