@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "MCP server for the Viator Partner API — search tours and activities, product details, availability schedules, attractions, and destinations",
-    "version": "1.0.2"
+    "version": "1.0.3"
   },
   "plugins": [
     {
@@ -15,7 +15,7 @@
       "displayName": "Viator",
       "source": "./",
       "description": "Search Viator tours, activities and experiences — products, pricing, availability schedules, attractions, and destinations via the Viator Partner API",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "author": {
         "name": "Chris Hall"
       },

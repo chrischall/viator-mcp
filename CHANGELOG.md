@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3](https://github.com/chrischall/viator-mcp/compare/v1.0.2...v1.0.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* **plugin:** address review findings ([#19](https://github.com/chrischall/viator-mcp/issues/19)) ([fe10fe0](https://github.com/chrischall/viator-mcp/commit/fe10fe03d3c529b9343172a45b1d658a83eb00da))
+* **plugin:** move SKILL.md into skills/ directory so plugin skills load ([#17](https://github.com/chrischall/viator-mcp/issues/17)) ([a4a74a7](https://github.com/chrischall/viator-mcp/commit/a4a74a7980e34ad5015f08b17a679eb73d511df0))
+
 ## [1.0.2](https://github.com/chrischall/viator-mcp/compare/v1.0.1...v1.0.2) (2026-07-07)
 
 
