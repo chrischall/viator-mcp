@@ -5,7 +5,10 @@ name: release-please
 # in THIS file (not a reusable workflow) because npm trusted publishing and
 # mcp-publisher bind to this repo's workflow identity via OIDC.
 #
-# The release PR is the human review gate: add `release-ready` to ship it.
+# The release PR ships via `release-ready`: adding it starts the auto-review,
+# and a passing review arms `ready-to-merge` → deferred CI → auto-merge. CI does
+# not run until the review passes, so `release-ready` is "review then ship", not
+# an instant CI arm.
 # The PAT (not GITHUB_TOKEN) so the release PR's events trigger CI/review.
 
 on:
@@ -47,14 +50,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
-
-      # The shared mcp-publish action packages and ClawHub-publishes a
-      # root-level SKILL.md (it has no skill-path input). The skill lives at
-      # skills/viator-mcp/SKILL.md (Claude Code plugin layout), so stage a
-      # root copy for the action; .mcpbignore excludes the copy from the
-      # .mcpb bundle. Drop this step if mcp-publish learns skills/*/SKILL.md.
-      - name: Stage skill for mcp-publish
-        run: cp skills/viator-mcp/SKILL.md SKILL.md
 
       - uses: chrischall/workflows/.github/actions/mcp-publish@main
         with:
