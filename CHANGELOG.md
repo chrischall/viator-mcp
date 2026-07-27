@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/chrischall/viator-mcp/compare/v1.0.3...v1.0.4) (2026-07-25)
+
+
+### Bug Fixes
+
+* **deps:** bump fast-uri out of the host-confusion advisories ([#22](https://github.com/chrischall/viator-mcp/issues/22)) ([6362ede](https://github.com/chrischall/viator-mcp/commit/6362ede76c93642953ea563534019594d229dafb))
+
 ## [1.0.3](https://github.com/chrischall/viator-mcp/compare/v1.0.2...v1.0.3) (2026-07-13)
 
 
