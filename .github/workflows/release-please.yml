@@ -55,5 +55,10 @@ jobs:
         with:
           version: ${{ needs.release-please.outputs.version }}
           tag-name: ${{ needs.release-please.outputs.tag_name }}
+# SKILL.md lives at skills/viator-mcp/SKILL.md (Claude Code plugin
+# layout), not the repo root. This replaces the old "Stage skill for
+# mcp-publish" cp step, whose own comment said to drop it once
+# mcp-publish learned skills/*/SKILL.md — it has (`skill-path`).
+skill-path: skills/viator-mcp/SKILL.md
           clawhub-token: ${{ secrets.CLAWHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
