@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.5](https://github.com/chrischall/viator-mcp/compare/v1.0.4...v1.0.5) (2026-07-27)
+
+
+### Bug Fixes
+
+* **release:** indent skill-path into the with: block ([#28](https://github.com/chrischall/viator-mcp/issues/28)) ([c0694e1](https://github.com/chrischall/viator-mcp/commit/c0694e1cc37d604797eccc8ff0704b060462ac17))
+* **release:** restore the skill-path pin dropped by the pipeline sweep ([#27](https://github.com/chrischall/viator-mcp/issues/27)) ([f512e85](https://github.com/chrischall/viator-mcp/commit/f512e85213d5da313013229f64dc836bde10c44b))
+* **release:** restore two file-header comments to column 0 ([#30](https://github.com/chrischall/viator-mcp/issues/30)) ([98c124e](https://github.com/chrischall/viator-mcp/commit/98c124e5d76e0d3fa8a8e180a601d3c03553ca1a))
+
 ## [1.0.4](https://github.com/chrischall/viator-mcp/compare/v1.0.3...v1.0.4) (2026-07-25)
 
 
