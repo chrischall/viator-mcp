@@ -1,5 +1,33 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ViatorClient } from '../src/client.js';
+
+// ViatorClient falls through to VIATOR_* env vars (VIATOR_API_BASE_URL,
+// VIATOR_LANGUAGE, VIATOR_API_KEY, cache TTLs) when the constructor opts
+// omit them, and `src/client.ts` loads a repo-local `.env` at import. A
+// developer whose `.env` points VIATOR_API_BASE_URL at the sandbox would
+// otherwise see the "production host" assertions fail (green in CI, red
+// locally). Neutralise the ambient env per test; tests that need a value
+// pass it via opts.
+const VIATOR_ENV_VARS = [
+  'VIATOR_API_BASE_URL',
+  'VIATOR_API_KEY',
+  'VIATOR_LANGUAGE',
+  'VIATOR_CACHE_TTL',
+  'VIATOR_STATIC_CACHE_TTL',
+] as const;
+const savedViatorEnv: Record<string, string | undefined> = {};
+beforeEach(() => {
+  for (const k of VIATOR_ENV_VARS) {
+    savedViatorEnv[k] = process.env[k];
+    delete process.env[k];
+  }
+});
+afterEach(() => {
+  for (const k of VIATOR_ENV_VARS) {
+    if (savedViatorEnv[k] === undefined) delete process.env[k];
+    else process.env[k] = savedViatorEnv[k];
+  }
+});
 
 /** Build a Response-like object for the mocked fetch. */
 function jsonRes(status: number, body: unknown, headers: Record<string, string> = {}) {
