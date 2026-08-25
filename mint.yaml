@@ -1,0 +1,38 @@
+version: 1
+name: Viator
+slug: viator
+summary: >-
+  Search Viator tours, activities and experiences — products, pricing,
+  availability schedules, attractions, and destinations via the Viator
+  Partner API
+env:
+  - name: VIATOR_API_KEY
+    secret: true
+    required: true
+    help: >-
+      Viator Partner API key (exp-api-key) — free Basic Access affiliate signup
+      at partnerresources.viator.com
+  - name: VIATOR_LANGUAGE
+    required: false
+    help: >-
+      Accept-Language for response text, e.g. en-US, es, fr, de, ja (default
+      en-US)
+  - name: VIATOR_CACHE_TTL
+    required: false
+    help: >-
+      Seconds to cache identical read responses (default 60; 0 disables)
+  - name: VIATOR_STATIC_CACHE_TTL
+    required: false
+    help: >-
+      Seconds to cache reference data — destinations, tags, locations, rates
+      (default 3600; 0 disables)
+  - name: VIATOR_API_BASE_URL
+    required: false
+    help: >-
+      Overrides the upstream API base URL. Leave unset for the default; if you
+      change it, update egress.allow to match.
+egress:
+  allow:
+    # Only hosts the SERVER process actually fetches. Hosts that appear
+    # solely in a URL this server BUILDS and returns are excluded.
+    - api.viator.com
