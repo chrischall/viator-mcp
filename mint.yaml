@@ -34,5 +34,10 @@ env:
 egress:
   allow:
     # Only hosts the SERVER process actually fetches. Hosts that appear
-    # solely in a URL this server BUILDS and returns are excluded.
+    # solely in a URL this server BUILDS and returns are excluded — so
+    # partnerresources.viator.com (the signup portal named in error hints)
+    # and viator.com (the productUrl deep-links) are NOT listed.
     - api.viator.com
+    # Dialled only when VIATOR_API_BASE_URL points at the sandbox
+    # (https://api.sandbox.viator.com/partner) to test with a sandbox key.
+    - api.sandbox.viator.com
