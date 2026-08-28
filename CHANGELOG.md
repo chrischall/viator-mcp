@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/chrischall/viator-mcp/compare/v1.0.5...v1.0.6) (2026-08-28)
+
+
+### Bug Fixes
+
+* **egress:** declare every host the server dials in mint.yaml ([#50](https://github.com/chrischall/viator-mcp/issues/50)) ([a25a756](https://github.com/chrischall/viator-mcp/commit/a25a756c4d94eda85c94df5eb8aa7efda329f11a))
+
 ## [1.0.5](https://github.com/chrischall/viator-mcp/compare/v1.0.4...v1.0.5) (2026-07-27)
 
 
