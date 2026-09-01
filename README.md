@@ -31,6 +31,7 @@ Get a key by signing up as a Viator affiliate at [partnerresources.viator.com](h
 | Attractions | `vt_search_attractions`, `vt_get_attraction` |
 | Availability | `vt_get_availability_schedule` |
 | Reference | `vt_list_destinations`, `vt_get_locations`, `vt_get_exchange_rates` |
+| Health | `vt_healthcheck` — is this connector working? Reports whether VIATOR_API_KEY resolved, whether Viator accepted it, and what to fix. Start here when another tool fails: an empty result can mean "no products" or "never authenticated". |
 
 All tools are read-only. `vt_search_products` and `vt_search_freetext` accept `compact: true` for slim summaries (code, title, price, rating, booking URL) instead of full records.
 

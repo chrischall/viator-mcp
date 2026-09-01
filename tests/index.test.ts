@@ -5,6 +5,7 @@ import { registerAttractionTools } from '../src/tools/attractions.js';
 import { registerAvailabilityTools } from '../src/tools/availability.js';
 import { registerSearchTools } from '../src/tools/search.js';
 import { registerReferenceTools } from '../src/tools/reference.js';
+import { registerHealthcheckTools } from '../src/tools/health.js';
 
 describe('tool roster', () => {
   it('registers exactly the expected tools', async () => {
@@ -14,6 +15,7 @@ describe('tool roster', () => {
       registerAvailabilityTools(s);
       registerSearchTools(s);
       registerReferenceTools(s);
+      registerHealthcheckTools(s);
     });
     const names = (await h.listTools()).map((t) => t.name).sort();
     expect(names).toEqual([
@@ -22,6 +24,7 @@ describe('tool roster', () => {
       'vt_get_exchange_rates',
       'vt_get_locations',
       'vt_get_product',
+      'vt_healthcheck',
       'vt_list_destinations',
       'vt_list_product_tags',
       'vt_search_attractions',
