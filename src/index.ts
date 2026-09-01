@@ -6,6 +6,7 @@ import { registerAttractionTools } from './tools/attractions.js';
 import { registerAvailabilityTools } from './tools/availability.js';
 import { registerSearchTools } from './tools/search.js';
 import { registerReferenceTools } from './tools/reference.js';
+import { registerHealthcheckTools } from './tools/health.js';
 
 // The ViatorClient is a module-level singleton (imported by each tool module)
 // that defers its config error to the first request — so the server boots and
@@ -20,5 +21,6 @@ await runMcp({
     registerAvailabilityTools,
     registerSearchTools,
     registerReferenceTools,
+    registerHealthcheckTools,
   ],
 });
