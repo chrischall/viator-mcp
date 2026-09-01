@@ -1,21 +1,20 @@
 import { describe, it, expect, vi } from 'vitest';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { createTestHarness, parseToolResult } from '@chrischall/mcp-utils/test';
 import { registerHealthcheckTools } from '../src/tools/health.js';
 
 function setup(env: Record<string, string | undefined>, probe?: () => Promise<unknown>) {
   const get = vi.fn(probe ?? (async () => ({ destinations: [] })));
-  const server = new McpServer({ name: 'test', version: '0.0.0' });
-  registerHealthcheckTools(server, { get } as any, (k: string) => env[k]);
-  const call = async () =>
-    JSON.parse((await (server as any)._registeredTools.vt_healthcheck.handler({}, {})).content[0].text);
-  return { server, call, get };
+  const harness = createTestHarness((s) => registerHealthcheckTools(s, { get } as any, (k: string) => env[k]));
+  const call = async () => parseToolResult<any>(await (await harness).callTool('vt_healthcheck'));
+  const names = async () => (await (await harness).listTools()).map((t) => t.name);
+  return { call, get, names };
 }
 
 const FULL = { VIATOR_API_KEY: 'KEY' };
 
 describe('vt_healthcheck', () => {
-  it('registers under the repo tool prefix', () => {
-    expect(Object.keys((setup(FULL).server as any)._registeredTools)).toEqual(['vt_healthcheck']);
+  it('registers under the repo tool prefix', async () => {
+    expect(await setup(FULL).names()).toEqual(['vt_healthcheck']);
   });
 
   it('reports ok when the key resolves and the probe succeeds', async () => {
@@ -59,11 +58,10 @@ describe('vt_healthcheck', () => {
 
   it('reads the real environment when no reader is injected', async () => {
     vi.stubEnv('VIATOR_API_KEY', 'REAL-KEY');
-    const server = new McpServer({ name: 'test', version: '0.0.0' });
-    registerHealthcheckTools(server, { get: vi.fn(async () => ({})) } as any);
-    const out = JSON.parse(
-      (await (server as any)._registeredTools.vt_healthcheck.handler({}, {})).content[0].text,
+    const h = await createTestHarness((s) =>
+      registerHealthcheckTools(s, { get: vi.fn(async () => ({})) } as any),
     );
+    const out = parseToolResult<any>(await h.callTool('vt_healthcheck'));
     expect(out.credential.resolved).toBe(true);
     expect(JSON.stringify(out)).not.toContain('REAL-KEY');
     vi.unstubAllEnvs();
