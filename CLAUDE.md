@@ -5,9 +5,9 @@ Guidance for Claude working in this repo.
 ## TL;DR
 
 **Viator Partner API** (v2) MCP server, **Basic Access affiliate tier** — read-only.
-Wraps `https://api.viator.com/partner` and exposes 10 tools over stdio: product
+Wraps `https://api.viator.com/partner` and exposes 11 tools over stdio: product
 search/details/tags, free-text search, attractions, availability schedules,
-destinations, locations, exchange rates. No booking endpoints (that's the
+destinations, locations, exchange rates, plus `vt_healthcheck`. No booking endpoints (that's the
 Merchant/Full-access+Booking tier); product results carry an affiliate
 `productUrl` for booking on viator.com.
 
