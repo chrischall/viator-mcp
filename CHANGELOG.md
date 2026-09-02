@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/chrischall/viator-mcp/compare/v1.0.6...v1.1.0) (2026-09-01)
+
+
+### Features
+
+* **health:** add vt_healthcheck ([#59](https://github.com/chrischall/viator-mcp/issues/59)) ([09858c8](https://github.com/chrischall/viator-mcp/commit/09858c8ead089844e6953e4eb5c3c9b9b8d9ba10))
+
+
+### Documentation
+
+* **health:** list vt_healthcheck in manifest.json and the tool docs ([#62](https://github.com/chrischall/viator-mcp/issues/62)) ([68ca7e0](https://github.com/chrischall/viator-mcp/commit/68ca7e062a8e2d5b2c8ec82796bb375b4d2572d0))
+
 ## [1.0.6](https://github.com/chrischall/viator-mcp/compare/v1.0.5...v1.0.6) (2026-08-28)
 
 
