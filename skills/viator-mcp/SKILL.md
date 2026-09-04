@@ -52,7 +52,8 @@ Then point `.mcp.json` at `dist/index.js` with `VIATOR_API_KEY` in `env`.
    (or `vt_list_destinations` for the full taxonomy).
 2. **Search products** — `vt_search_products` with the destination id plus filters
    (price, dates, rating, duration, tags via `vt_list_product_tags`, flags like
-   `FREE_CANCELLATION`). Use `compact: true` to keep results small while browsing.
+   `FREE_CANCELLATION`). Results are already slim while browsing — see
+   [Response shape](#response-shape).
 3. **Drill in** — `vt_get_product` for full details; `vt_get_availability_schedule` for
    seasons/start times/pricing (supplier currency — convert with `vt_get_exchange_rates`).
 4. **Attractions** — `vt_search_attractions` / `vt_get_attraction` for landmark-centric
@@ -68,6 +69,36 @@ Then point `.mcp.json` at `dist/index.js` with `VIATOR_API_KEY` in `env`.
 | Availability | `vt_get_availability_schedule` |
 | Reference | `vt_list_destinations`, `vt_get_locations`, `vt_get_exchange_rates` |
 | Health | `vt_healthcheck` — is this connector working? Reports whether VIATOR_API_KEY resolved, whether Viator accepted it, and what to fix. Start here when another tool fails: an empty result can mean "no products" or "never authenticated". |
+
+## Response shape
+
+Every read tool — all ten of them — takes `view: "compact" | "full"`, and
+**`compact` is the default**, so the smaller payload is what you get without
+asking for it. Pass `view: "full"` for Viator's untouched record.
+
+What `compact` *does* differs by tool, because only two of them have a field
+projection written against Viator's documented shapes:
+
+- `vt_search_products` and `vt_search_freetext` project each ProductSummary down
+  to its product code, title, from-price and currency, rating, review count,
+  duration, confirmation type, flags, booking URL and cover image — and nothing
+  else. (`vt_search_freetext` projects only its PRODUCTS block; its attraction
+  and destination results are media-stripped instead.) If Viator's shape drifts,
+  the projection falls back to the raw response rather than emitting an empty
+  one.
+- The other eight — `vt_get_product`, `vt_list_product_tags`,
+  `vt_search_attractions`, `vt_get_attraction`, `vt_get_availability_schedule`,
+  `vt_list_destinations`, `vt_get_locations` and `vt_get_exchange_rates` — strip
+  image and avatar URLs and do nothing else. Every other field comes back as
+  Viator sent it.
+
+`vt_healthcheck` takes no `view`: it reports a verdict it assembles itself, not
+a Viator payload, and a rung that cannot change anything is worse than no
+parameter.
+
+(This replaced an opt-in `compact: true` flag. Passing `compact` now does
+nothing — zod drops the unknown key and you get the compact rung regardless,
+which is what the flag used to ask for.)
 
 ## Notes
 
