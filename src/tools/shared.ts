@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { buildQueryString } from '@chrischall/mcp-utils';
+import { buildQueryString, stripMediaUrls } from '@chrischall/mcp-utils';
 
 /**
  * Product code (e.g. `5010SYDNEY`, `250380P1`). Interpolated into the URL
@@ -120,4 +120,47 @@ export function compactProductsEnvelope(data: unknown): unknown {
     return data;
   }
   return { totalCount: d.totalCount, products: d.products.map(compactProduct) };
+}
+
+/**
+ * What `compactProduct` keeps, in prose — quoted in the `view` note of every
+ * tool that runs it, so the schema promises exactly these fields and no others.
+ */
+export const COMPACT_PRODUCT_FIELDS =
+  'product code, title, from-price and currency, rating, review count, duration, ' +
+  'confirmation type, flags, booking URL and cover image';
+
+/**
+ * Apply the compact projection to a `/search/freetext` envelope.
+ *
+ * The PRODUCTS block is projected with `compactProduct` — the same grounded
+ * projection `vt_search_products` runs, over the same ProductSummary records.
+ * The attraction and destination blocks have no projection to speak for them,
+ * so they get the media stripping every un-projected payload in this server
+ * gets. Each half is handled by the rule it is grounded for.
+ *
+ * Key order is preserved: the projection replaces the products block in place
+ * rather than relocating it to the end of the object.
+ *
+ * On drift (no `products.results` array) the whole payload falls back to media
+ * stripping rather than to an empty or wrong projection — the same failure
+ * posture as `compactProductsEnvelope`.
+ */
+export function compactFreetextEnvelope(data: unknown): unknown {
+  const d = data as { products?: { totalCount?: number; results?: unknown[] } };
+  const results = d?.products?.results;
+  if (!Array.isArray(results)) {
+    console.error(
+      '[viator-mcp] /search/freetext response did not contain a products.results array; media-stripping the raw response instead of projecting it',
+    );
+    return stripMediaUrls(data);
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+    out[key] =
+      key === 'products'
+        ? { totalCount: d.products?.totalCount, results: results.map(compactProduct) }
+        : stripMediaUrls(value);
+  }
+  return out;
 }

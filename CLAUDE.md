@@ -45,8 +45,27 @@ key; the error surfaces on the first tool call (`requireKey()`).
 - `src/tools/*.ts` — `registerXxxTools(server)` per area; all read-only
 - `src/tools/shared.ts` — zod atoms (ProductCode path-charset guard), currency/sort enums,
   pagination, `prune`/`range`, compact ProductSummary projection (drift-fallback to raw)
+- `src/view.ts` — the `view` rungs (`compact` default / `full`), `viewArg()` and `viewResponse()`
 - `docs/VIATOR-API.md` — pinned API shapes, live-verified 2026-07-05 (sandbox, Basic Access key)
 - `tests/` — vitest, network fully mocked; `server-boot.test.ts` spawns the real built artifacts
+
+## Response shape (`view`)
+
+Every read tool takes `view: 'compact' | 'full'`, defaulting to `compact` (the fleet
+vocabulary from `@chrischall/mcp-utils`). There is no `compact: boolean` anywhere — one
+idea, one parameter. All ten responses are minified.
+
+**This repo is GROUNDED, and two rollouts labelled it otherwise.** `docs/VIATOR-API.md`
+pins every endpoint's response fields, and `compactProduct` (`tools/shared.ts`) is a real
+projection written off it. So `vt_search_products` and `vt_search_freetext` — the two
+tools returning ProductSummary records — run that projection on `compact`;
+the other eight media-strip. That is a backlog gap, not an epistemic ceiling: a measured
+projection for those endpoints belongs in `view.ts` beside these when someone writes one.
+
+Two rules the design rests on: a hand-written projection is **not** then media-stripped
+(`compactProduct` keeps `coverImageUrl` deliberately), and each tool's `view` note
+describes **that tool's** rung — a shared note promising fields a tool never returns is
+worse than a generic one.
 
 ## Conventions
 

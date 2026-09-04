@@ -115,7 +115,7 @@ describe('product tools', () => {
     await h.close();
   });
 
-  it('vt_search_products compact=true falls back to the raw response on drift', async () => {
+  it('vt_search_products falls back to the raw response on drift', async () => {
     vi.spyOn(client, 'post').mockResolvedValue({ unexpected: 'shape' });
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const h = await createTestHarness(registerProductTools);

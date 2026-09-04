@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { textResult } from '@chrischall/mcp-utils';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import { CURRENCIES, campaignParam, qs, prune } from './shared.js';
@@ -13,7 +12,9 @@ export function registerReferenceTools(server: McpServer): void {
         'List every Viator destination (cities, regions, countries) with ids, parent hierarchy, IATA codes, time zones, and coordinates. Use the destinationId with vt_search_products / vt_search_attractions. Reference data — cached.',
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
-        view: viewArg(), ...campaignParam },
+        view: viewArg(),
+        ...campaignParam,
+      },
     },
     async ({ campaign_value, view }) => {
       const data = await client.get(`/destinations${qs({ 'campaign-value': campaign_value })}`, {

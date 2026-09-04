@@ -1,41 +1,64 @@
 import { minifiedResult, resolveView, stripMediaUrls, viewParam, type View } from '@chrischall/mcp-utils';
-import { compactProductsEnvelope } from './tools/shared.js';
 
 /**
  * The rungs this server honours (`@chrischall/mcp-utils`' `view` vocabulary;
  * `chrischall/workflows` `docs/fleet-conventions.md`, "Response shape").
  *
- * **What compact does here, and what it deliberately does NOT do.**
+ * **Which tier this repo is in — stated plainly, because the first two passes
+ * got it wrong.** #69 rolled `view` out here as an "un-grounded" server: no
+ * captured payload, no documented field list, therefore media stripping and
+ * nothing more. Both halves of that were false, and the docblock kept most of
+ * the claim after #72 corrected half of it. What is actually true:
  *
- * Two things happen on the compact rung, and they are grounded differently.
+ * - `docs/VIATOR-API.md` pins the response shape of every endpoint this server
+ *   calls, field by field, live-verified 2026-07-05 against a Basic Access key.
+ *   There IS a documented field list here, and `compactProduct` was written off
+ *   exactly it.
+ * - `compactProduct` / `compactProductsEnvelope` (`tools/shared.ts`) predate
+ *   the rollout — a real, named, drift-safe field projection over Viator's
+ *   ProductSummary. #69's fleet survey missed it because it looked for a
+ *   `prune`/`compact()`-shaped helper and this one is named for its payload.
  *
- * `vt_search_products` gets a REAL field projection —
- * `compactProductsEnvelope` in `tools/shared.ts`, which has been here all along
- * behind an opt-in `compact: false`. It is documented, it names its fields, and
- * it degrades safely. Defaulting it on is the whole point of this vocabulary.
+ * So: the two tools that return ProductSummary records — `vt_search_products`
+ * and `vt_search_freetext` — run that projection on their compact rung. The
+ * other eight get media stripping. Not because their fields are unknown (they
+ * are pinned in the doc above), but because no projection has been written and
+ * measured for them yet. That is a backlog item, not an epistemic ceiling, and
+ * when one is written it belongs here beside these two.
  *
- * Every other read tool gets media stripping only. The repo holds no captured
- * payload for those endpoints, so nothing here can honestly say which of their
- * fields matter — and a subtractive rule cannot lose a field nobody knew about,
- * which is the failure an invented field list would risk.
- *
- * The first pass of this rollout (#69) shipped the second half and MISSED the
- * first: the search tool kept its own `compact` boolean beside the new `view`,
- * so one server had two vocabularies and the one tool with a real projection
- * still defaulted to the fat rung.
+ * One rule the projected tools depend on: **a hand-written projection is NOT
+ * then media-stripped.** `compactProduct` deliberately keeps `coverImageUrl` as
+ * one of its named summary fields; running a blind subtractive rule over its
+ * output would overrule a decision made WITH knowledge of the API using one
+ * made without.
  */
 export const VIATOR_VIEWS = ['compact', 'full'] as const;
 
-const NOTE =
+/**
+ * The note for a tool whose compact rung is media stripping and nothing else.
+ *
+ * A tool with a real projection passes its OWN note naming the fields it keeps.
+ * One shared note cannot describe both: the version this file used to ship
+ * promised "no field projection" on all ten tools while two of them ran one,
+ * and a note that describes a rung the tool does not have is worse than a
+ * generic one — the caller acts on it.
+ */
+const MEDIA_NOTE =
   'compact strips image/avatar URLs from the response; "full" returns Viator\'s payload untouched. ' +
-  'No field projection: this server has no verified record of which Viator fields matter, and inventing ' +
-  'one would risk dropping a field a caller needs.';
+  'No field projection on this tool — every other field comes back as Viator sent it.';
 
-/** The `view` parameter every read tool in this server takes. */
-export const viewArg = (): ReturnType<typeof viewParam> => viewParam(VIATOR_VIEWS, { note: NOTE });
+/**
+ * The `view` parameter a read tool takes. Pass `note` on a tool whose compact
+ * rung is a field projection, so the schema says what that tool actually keeps.
+ */
+export const viewArg = (note: string = MEDIA_NOTE): ReturnType<typeof viewParam> =>
+  viewParam(VIATOR_VIEWS, { note });
 
 /**
  * Answer in the requested rung.
+ *
+ * `project` is the tool's own field projection, run INSTEAD of media stripping
+ * (see the rule in the docblock above); omit it and compact media-strips.
  *
  * Only ever called from a READ tool. A write's response is a receipt — an id,
  * a status — with nothing to strip and everything to keep.
@@ -43,15 +66,9 @@ export const viewArg = (): ReturnType<typeof viewParam> => viewParam(VIATOR_VIEW
 export function viewResponse(
   view: string | undefined,
   data: unknown,
-  opts: { products?: boolean } = {},
+  project?: (data: unknown) => unknown,
 ): ReturnType<typeof minifiedResult> {
   const rung: View = resolveView(view, VIATOR_VIEWS);
   if (rung !== 'compact') return minifiedResult(data);
-  // A hand-written projection is NOT then media-stripped. It was written with
-  // knowledge of the API and deliberately keeps `coverImageUrl` as one of its
-  // named summary fields; running a blind subtractive rule over it would
-  // overrule a grounded decision with an un-grounded one. Media stripping is
-  // for the payloads that have no projection to speak for them.
-  if (opts.products === true) return minifiedResult(compactProductsEnvelope(data));
-  return minifiedResult(stripMediaUrls(data));
+  return minifiedResult(project ? project(data) : stripMediaUrls(data));
 }

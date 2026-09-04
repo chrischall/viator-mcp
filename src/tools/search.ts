@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { minifiedResult } from '@chrischall/mcp-utils';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import {
@@ -11,10 +10,20 @@ import {
   qs,
   prune,
   range,
-  compactProduct,
+  compactFreetextEnvelope,
+  COMPACT_PRODUCT_FIELDS,
 } from './shared.js';
 
 const SEARCH_TYPES = ['PRODUCTS', 'ATTRACTIONS', 'DESTINATIONS'] as const;
+
+/**
+ * This tool's compact rung projects one block and media-strips the others, so
+ * its note says so rather than borrowing the media-only note the other tools use.
+ */
+const FREETEXT_VIEW_NOTE =
+  `compact (default) projects the PRODUCT results down to their ${COMPACT_PRODUCT_FIELDS} ` +
+  'and strips image/avatar URLs from the attraction and destination results; ' +
+  '"full" returns Viator\'s payload untouched.';
 
 export function registerSearchTools(server: McpServer): void {
   server.registerTool(
@@ -24,7 +33,7 @@ export function registerSearchTools(server: McpServer): void {
         'Free-text search across Viator products, attractions, and destinations (e.g. "colosseum underground tour"). The fastest way to find things when you don\'t have a destination id yet.',
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
-        view: viewArg(),
+        view: viewArg(FREETEXT_VIEW_NOTE),
         search_term: z.string().min(1).describe('Free-text search term'),
         search_types: z
           .array(z.enum(SEARCH_TYPES))
@@ -43,10 +52,6 @@ export function registerSearchTools(server: McpServer): void {
         count: z.number().int().min(1).max(50).default(10).describe('Results per page per type (max 50; default 10)'),
         ...currencyParam,
         ...campaignParam,
-        compact: z
-          .boolean()
-          .default(false)
-          .describe('Return slim product summaries instead of full records'),
       },
     },
     async (args) => {
@@ -67,13 +72,7 @@ export function registerSearchTools(server: McpServer): void {
         currency: args.currency,
       });
       const data = await client.post(`/search/freetext${qs({ 'campaign-value': args.campaign_value })}`, body);
-      if (!args.compact) return viewResponse(args.view, data);
-      const d = data as { products?: { totalCount?: number; results?: unknown[] } };
-      if (!Array.isArray(d?.products?.results)) return viewResponse(args.view, data);
-      return minifiedResult({
-        ...d,
-        products: { totalCount: d.products.totalCount, results: d.products.results.map(compactProduct) },
-      });
+      return viewResponse(args.view, data, compactFreetextEnvelope);
     },
   );
 }
