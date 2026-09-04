@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/chrischall/viator-mcp/compare/v1.2.0...v1.2.1) (2026-09-04)
+
+
+### Documentation
+
+* **skill:** document the view vocabulary, not the removed compact flag ([#79](https://github.com/chrischall/viator-mcp/issues/79)) ([d93a536](https://github.com/chrischall/viator-mcp/commit/d93a53602497d8b4d3fdd19d624ee40ead58c68f))
+
 ## [1.2.0](https://github.com/chrischall/viator-mcp/compare/v1.1.0...v1.2.0) (2026-09-04)
 
 
