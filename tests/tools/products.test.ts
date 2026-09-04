@@ -68,7 +68,7 @@ describe('product tools', () => {
     await h.close();
   });
 
-  it('vt_search_products compact=true projects slim summaries', async () => {
+  it('vt_search_products projects slim summaries BY DEFAULT', async () => {
     vi.spyOn(client, 'post').mockResolvedValue({
       totalCount: 1,
       products: [
@@ -96,7 +96,7 @@ describe('product tools', () => {
       ],
     });
     const h = await createTestHarness(registerProductTools);
-    const res = await h.callTool('vt_search_products', { destination: '357', compact: true });
+    const res = await h.callTool('vt_search_products', { destination: '357' });
     const data = parseToolResult<{ totalCount: number; products: Record<string, unknown>[] }>(res);
     expect(data.totalCount).toBe(1);
     expect(data.products[0]).toEqual({
@@ -119,7 +119,7 @@ describe('product tools', () => {
     vi.spyOn(client, 'post').mockResolvedValue({ unexpected: 'shape' });
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const h = await createTestHarness(registerProductTools);
-    const res = await h.callTool('vt_search_products', { destination: '357', compact: true });
+    const res = await h.callTool('vt_search_products', { destination: '357' });
     const data = parseToolResult<Record<string, unknown>>(res);
     expect(data).toEqual({ unexpected: 'shape' });
     expect(errSpy).toHaveBeenCalled();
