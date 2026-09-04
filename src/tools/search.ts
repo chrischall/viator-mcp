@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { textResult } from '@chrischall/mcp-utils';
+import { minifiedResult } from '@chrischall/mcp-utils';
+import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import {
   PRODUCT_SORTS,
@@ -23,6 +24,7 @@ export function registerSearchTools(server: McpServer): void {
         'Free-text search across Viator products, attractions, and destinations (e.g. "colosseum underground tour"). The fastest way to find things when you don\'t have a destination id yet.',
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
+        view: viewArg(),
         search_term: z.string().min(1).describe('Free-text search term'),
         search_types: z
           .array(z.enum(SEARCH_TYPES))
@@ -65,10 +67,10 @@ export function registerSearchTools(server: McpServer): void {
         currency: args.currency,
       });
       const data = await client.post(`/search/freetext${qs({ 'campaign-value': args.campaign_value })}`, body);
-      if (!args.compact) return textResult(data);
+      if (!args.compact) return viewResponse(args.view, data);
       const d = data as { products?: { totalCount?: number; results?: unknown[] } };
-      if (!Array.isArray(d?.products?.results)) return textResult(data);
-      return textResult({
+      if (!Array.isArray(d?.products?.results)) return viewResponse(args.view, data);
+      return minifiedResult({
         ...d,
         products: { totalCount: d.products.totalCount, results: d.products.results.map(compactProduct) },
       });

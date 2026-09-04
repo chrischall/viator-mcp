@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { textResult } from '@chrischall/mcp-utils';
+import { minifiedResult } from '@chrischall/mcp-utils';
+import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import {
   ProductCode,
@@ -67,7 +68,7 @@ export function registerProductTools(server: McpServer): void {
         currency: args.currency,
       });
       const data = await client.post(`/products/search${qs({ 'campaign-value': args.campaign_value })}`, body);
-      return textResult(args.compact ? compactProductsEnvelope(data) : data);
+      return minifiedResult(args.compact ? compactProductsEnvelope(data) : data);
     },
   );
 
@@ -78,13 +79,14 @@ export function registerProductTools(server: McpServer): void {
         'Get full details for one Viator product by product code — description, inclusions/exclusions, itinerary, product options, cancellation policy, booking URL, review summary.',
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
+        view: viewArg(),
         product_code: ProductCode.describe('Viator product code, e.g. 5010SYDNEY'),
         ...campaignParam,
       },
     },
-    async ({ product_code, campaign_value }) => {
+    async ({ product_code, campaign_value, view }) => {
       const data = await client.get(`/products/${product_code}${qs({ 'campaign-value': campaign_value })}`);
-      return textResult(data);
+      return viewResponse(view, data);
     },
   );
 
@@ -94,11 +96,12 @@ export function registerProductTools(server: McpServer): void {
       description:
         'List all Viator product tags (tag id → names in every locale, with parent-tag hierarchy). Use tag ids to filter vt_search_products. Reference data — cached.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {},
+      inputSchema: {
+        view: viewArg(),},
     },
-    async () => {
+    async ({ view }) => {
       const data = await client.get('/products/tags', { cache: 'static' });
-      return textResult(data);
+      return viewResponse(view, data);
     },
   );
 }

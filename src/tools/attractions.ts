@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { textResult } from '@chrischall/mcp-utils';
+import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import { AttractionId, campaignParam, qs, prune } from './shared.js';
 
@@ -15,6 +16,7 @@ export function registerAttractionTools(server: McpServer): void {
         'List attractions (landmarks, museums, points of interest) in a Viator destination, including the product codes mapped to each attraction. Use vt_list_destinations to find destination ids.',
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
+        view: viewArg(),
         destination_id: z.number().int().positive().describe('Destination id (from vt_list_destinations)'),
         sort: z.enum(ATTRACTION_SORTS).optional().describe('Sort key (default: DEFAULT)'),
         start: z.number().int().min(1).default(1).describe('1-based index of the first result'),
@@ -22,14 +24,14 @@ export function registerAttractionTools(server: McpServer): void {
         ...campaignParam,
       },
     },
-    async ({ destination_id, sort, start, count, campaign_value }) => {
+    async ({ destination_id, sort, start, count, campaign_value, view }) => {
       const body = prune({
         destinationId: destination_id,
         sorting: sort ? { sort } : undefined,
         pagination: { start, count },
       });
       const data = await client.post(`/attractions/search${qs({ 'campaign-value': campaign_value })}`, body);
-      return textResult(data);
+      return viewResponse(view, data);
     },
   );
 
@@ -40,13 +42,14 @@ export function registerAttractionTools(server: McpServer): void {
         'Get details for one Viator attraction by id — name, destination, opening hours, review summary, mapped product codes, and the attraction URL.',
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
+        view: viewArg(),
         attraction_id: AttractionId.describe('Viator attraction id'),
         ...campaignParam,
       },
     },
-    async ({ attraction_id, campaign_value }) => {
+    async ({ attraction_id, campaign_value, view }) => {
       const data = await client.get(`/attractions/${attraction_id}${qs({ 'campaign-value': campaign_value })}`);
-      return textResult(data);
+      return viewResponse(view, data);
     },
   );
 }
