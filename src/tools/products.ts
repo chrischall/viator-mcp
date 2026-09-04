@@ -43,10 +43,7 @@ export function registerProductTools(server: McpServer): void {
         ...paginationParams,
         ...currencyParam,
         ...campaignParam,
-        compact: z
-          .boolean()
-          .default(false)
-          .describe('Return a slim summary per product (code, title, price, rating, URL) instead of full records'),
+        view: viewArg(),
       },
     },
     async (args) => {
@@ -68,7 +65,7 @@ export function registerProductTools(server: McpServer): void {
         currency: args.currency,
       });
       const data = await client.post(`/products/search${qs({ 'campaign-value': args.campaign_value })}`, body);
-      return minifiedResult(args.compact ? compactProductsEnvelope(data) : data);
+      return viewResponse(args.view, data, { products: true });
     },
   );
 
