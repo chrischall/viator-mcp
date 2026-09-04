@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/chrischall/viator-mcp/compare/v1.1.0...v1.2.0) (2026-09-04)
+
+
+### Features
+
+* **tools:** compact by default — strip media URLs, and minify every response ([#69](https://github.com/chrischall/viator-mcp/issues/69)) ([9f2e36f](https://github.com/chrischall/viator-mcp/commit/9f2e36f86f04cedcbd0a23a7f62a3ee37368ea15))
+
+
+### Bug Fixes
+
+* **build:** restore the literal em dash in the package description ([#74](https://github.com/chrischall/viator-mcp/issues/74)) ([1542e12](https://github.com/chrischall/viator-mcp/commit/1542e12554fa3354ab0c46ae1c38883d237db395))
+* **deps:** pick up @chrischall/mcp-utils 0.23.1 ([#75](https://github.com/chrischall/viator-mcp/issues/75)) ([1c7dc1c](https://github.com/chrischall/viator-mcp/commit/1c7dc1c69a4e0e6aed59cf2b98ac56b666e5a55d))
+* **deps:** pick up @chrischall/mcp-utils 0.23.2 ([#77](https://github.com/chrischall/viator-mcp/issues/77)) ([dbc4ddb](https://github.com/chrischall/viator-mcp/commit/dbc4ddbf6eed7262eb075cc1870187192ce2a2f5))
+* **tools:** one view vocabulary, per-tool notes, and an honest tier in view.ts ([#78](https://github.com/chrischall/viator-mcp/issues/78)) ([1733a4c](https://github.com/chrischall/viator-mcp/commit/1733a4c5e9e40263204571c5e9c3b52b5df93090)), closes [#70](https://github.com/chrischall/viator-mcp/issues/70) [#73](https://github.com/chrischall/viator-mcp/issues/73)
+* **tools:** unify the compact vocabulary — [#69](https://github.com/chrischall/viator-mcp/issues/69) left two of them in one server ([#72](https://github.com/chrischall/viator-mcp/issues/72)) ([66ab2bc](https://github.com/chrischall/viator-mcp/commit/66ab2bc700487a51bb950b5bc30135981a829e76))
+
 ## [1.1.0](https://github.com/chrischall/viator-mcp/compare/v1.0.6...v1.1.0) (2026-09-01)
 
 
