@@ -20,11 +20,13 @@ describe('what compact does — and what it deliberately does not', () => {
     expect(parse(viewResponse('compact', data))).toEqual({ users: [{ id: 7, name: 'A' }] });
   });
 
-  it('keeps EVERY other field, because nothing here knows which Viator fields matter', () => {
-    // The honest ceiling for this repo: no schema, no fixture, no documented
-    // shape, no live tenant. A field list invented here could drop something a
-    // caller needs, and the record would come back with holes in it looking
-    // like a verified answer.
+  it('keeps EVERY other field on a tool with no projection of its own', () => {
+    // Media stripping is subtractive and names no fields, so it cannot put a
+    // hole in a record. The eight tools that run it have their shapes pinned in
+    // docs/VIATOR-API.md — nobody has written and MEASURED a projection for
+    // them yet, which is a backlog item, not a claim that their fields are
+    // unknowable. The two ProductSummary tools do have one; see
+    // tests/tools/products.test.ts and tests/tools/search.test.ts.
     const record = {
       productCode: 'P1', title: 'Tour', duration: { fixedDurationInMinutes: 120 }, pricing: { summary: { fromPrice: 49 } }, flags: [], cancellationPolicy: null,
       somethingNobodyAnticipated: 'kept',

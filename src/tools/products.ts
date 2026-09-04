@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { minifiedResult } from '@chrischall/mcp-utils';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import {
@@ -14,7 +13,13 @@ import {
   prune,
   range,
   compactProductsEnvelope,
+  COMPACT_PRODUCT_FIELDS,
 } from './shared.js';
+
+/** This tool's compact rung is a real projection, so its note names the fields. */
+const SEARCH_VIEW_NOTE =
+  `compact (default) projects each result down to its ${COMPACT_PRODUCT_FIELDS}, ` +
+  'falling back to the raw response if Viator\'s shape drifts; "full" returns Viator\'s payload untouched.';
 
 export function registerProductTools(server: McpServer): void {
   server.registerTool(
@@ -43,7 +48,7 @@ export function registerProductTools(server: McpServer): void {
         ...paginationParams,
         ...currencyParam,
         ...campaignParam,
-        view: viewArg(),
+        view: viewArg(SEARCH_VIEW_NOTE),
       },
     },
     async (args) => {
@@ -65,7 +70,7 @@ export function registerProductTools(server: McpServer): void {
         currency: args.currency,
       });
       const data = await client.post(`/products/search${qs({ 'campaign-value': args.campaign_value })}`, body);
-      return viewResponse(args.view, data, { products: true });
+      return viewResponse(args.view, data, compactProductsEnvelope);
     },
   );
 
@@ -94,7 +99,8 @@ export function registerProductTools(server: McpServer): void {
         'List all Viator product tags (tag id → names in every locale, with parent-tag hierarchy). Use tag ids to filter vt_search_products. Reference data — cached.',
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
-        view: viewArg(),},
+        view: viewArg(),
+      },
     },
     async ({ view }) => {
       const data = await client.get('/products/tags', { cache: 'static' });
