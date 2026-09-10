@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.2](https://github.com/chrischall/viator-mcp/compare/v1.2.1...v1.2.2) (2026-09-10)
+
+
+### Bug Fixes
+
+* **deps:** @chrischall/mcp-utils 0.26.1 ([#89](https://github.com/chrischall/viator-mcp/issues/89)) ([30999b6](https://github.com/chrischall/viator-mcp/commit/30999b6a58b5843b94f89d39b9fb3895bf5e6214))
+* **deps:** bump hono from 4.13.1 to 4.13.7 ([#87](https://github.com/chrischall/viator-mcp/issues/87)) ([90b6251](https://github.com/chrischall/viator-mcp/commit/90b6251f30289580940b5fcac08c87f6cff79b6f))
+* **deps:** declare the peer floors mcp-utils 0.26.1 requires ([#91](https://github.com/chrischall/viator-mcp/issues/91)) ([58b2c1f](https://github.com/chrischall/viator-mcp/commit/58b2c1f91f53b1ae15a5613a5b51dff0bcf90ef7)), closes [#90](https://github.com/chrischall/viator-mcp/issues/90)
+
 ## [1.2.1](https://github.com/chrischall/viator-mcp/compare/v1.2.0...v1.2.1) (2026-09-04)
 
 
