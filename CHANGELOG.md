@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/chrischall/viator-mcp/compare/v1.2.2...v1.2.3) (2026-09-12)
+
+
+### Bug Fixes
+
+* **deps:** bump zod in the production-dependencies group ([#94](https://github.com/chrischall/viator-mcp/issues/94)) ([75c1d30](https://github.com/chrischall/viator-mcp/commit/75c1d3080bdeb0693626fe8560d2a0649ddcf83f))
+
 ## [1.2.2](https://github.com/chrischall/viator-mcp/compare/v1.2.1...v1.2.2) (2026-09-10)
 
 
