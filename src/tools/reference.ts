@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import { CURRENCIES, campaignParam, qs, prune } from './shared.js';
@@ -11,10 +11,10 @@ export function registerReferenceTools(server: McpServer): void {
       description:
         'List every Viator destination (cities, regions, countries) with ids, parent hierarchy, IATA codes, time zones, and coordinates. Use the destinationId with vt_search_products / vt_search_attractions. Reference data — cached.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {
+      inputSchema: z.object({
         view: viewArg(),
         ...campaignParam,
-      },
+      }),
     },
     async ({ campaign_value, view }) => {
       const data = await client.get(`/destinations${qs({ 'campaign-value': campaign_value })}`, {
@@ -30,14 +30,14 @@ export function registerReferenceTools(server: McpServer): void {
       description:
         'Resolve Viator location references (e.g. "LOC-...", meeting points, pickup points from product details) to names, addresses, and coordinates. Up to 500 references per call. Reference data — cached.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {
+      inputSchema: z.object({
         view: viewArg(),
         location_refs: z
           .array(z.string().min(1))
           .min(1)
           .max(500)
           .describe('Location reference ids from product content (max 500)'),
-      },
+      }),
     },
     async ({ location_refs, view }) => {
       const data = await client.post('/locations/bulk', { locations: location_refs }, { cache: 'static' });
@@ -51,11 +51,11 @@ export function registerReferenceTools(server: McpServer): void {
       description:
         'Get exchange rates between currencies Viator supports — needed to convert supplier-currency prices from vt_get_availability_schedule. Reference data — cached.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {
+      inputSchema: z.object({
         view: viewArg(),
         source_currencies: z.array(z.enum(CURRENCIES)).optional().describe('Source currency codes (e.g. ["EUR"])'),
         target_currencies: z.array(z.enum(CURRENCIES)).optional().describe('Target currency codes (e.g. ["USD"])'),
-      },
+      }),
     },
     async ({ source_currencies, target_currencies, view }) => {
       const body = prune({ sourceCurrencies: source_currencies, targetCurrencies: target_currencies });

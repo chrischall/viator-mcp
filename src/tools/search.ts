@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import {
@@ -32,7 +32,7 @@ export function registerSearchTools(server: McpServer): void {
       description:
         'Free-text search across Viator products, attractions, and destinations (e.g. "colosseum underground tour"). The fastest way to find things when you don\'t have a destination id yet.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {
+      inputSchema: z.object({
         view: viewArg(FREETEXT_VIEW_NOTE),
         search_term: z.string().min(1).describe('Free-text search term'),
         search_types: z
@@ -52,7 +52,7 @@ export function registerSearchTools(server: McpServer): void {
         count: z.number().int().min(1).max(50).default(10).describe('Results per page per type (max 50; default 10)'),
         ...currencyParam,
         ...campaignParam,
-      },
+      }),
     },
     async (args) => {
       const productFiltering = prune({

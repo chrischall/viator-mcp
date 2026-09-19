@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
 import {
@@ -28,7 +28,7 @@ export function registerProductTools(server: McpServer): void {
       description:
         'Search Viator tours, activities and experiences with structured filters (destination, tags, price, dates, rating, duration). Returns product summaries with pricing and booking URLs. Use vt_list_destinations to find destination ids and vt_list_product_tags for tag ids.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {
+      inputSchema: z.object({
         destination: z.string().optional().describe('Destination id (from vt_list_destinations), e.g. "732" for Paris'),
         tags: z.array(z.number().int()).optional().describe('Tag ids products must match (from vt_list_product_tags)'),
         flags: z
@@ -49,7 +49,7 @@ export function registerProductTools(server: McpServer): void {
         ...currencyParam,
         ...campaignParam,
         view: viewArg(SEARCH_VIEW_NOTE),
-      },
+      }),
     },
     async (args) => {
       const filtering = prune({
@@ -80,11 +80,11 @@ export function registerProductTools(server: McpServer): void {
       description:
         'Get full details for one Viator product by product code — description, inclusions/exclusions, itinerary, product options, cancellation policy, booking URL, review summary.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {
+      inputSchema: z.object({
         view: viewArg(),
         product_code: ProductCode.describe('Viator product code, e.g. 5010SYDNEY'),
         ...campaignParam,
-      },
+      }),
     },
     async ({ product_code, campaign_value, view }) => {
       const data = await client.get(`/products/${product_code}${qs({ 'campaign-value': campaign_value })}`);
@@ -98,9 +98,9 @@ export function registerProductTools(server: McpServer): void {
       description:
         'List all Viator product tags (tag id → names in every locale, with parent-tag hierarchy). Use tag ids to filter vt_search_products. Reference data — cached.',
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: {
+      inputSchema: z.object({
         view: viewArg(),
-      },
+      }),
     },
     async ({ view }) => {
       const data = await client.get('/products/tags', { cache: 'static' });
