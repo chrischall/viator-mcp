@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/chrischall/viator-mcp/compare/v1.2.3...v2.0.0) (2026-09-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **mcp:** migrate server to SDK v2 ([#97](https://github.com/chrischall/viator-mcp/issues/97))
+
+### Features
+
+* **mcp:** migrate server to SDK v2 ([#97](https://github.com/chrischall/viator-mcp/issues/97)) ([4f85786](https://github.com/chrischall/viator-mcp/commit/4f8578649a13c3eea1ae3a326d49c168a8180fdb))
+
 ## [1.2.3](https://github.com/chrischall/viator-mcp/compare/v1.2.2...v1.2.3) (2026-09-12)
 
 
