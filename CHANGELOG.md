@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/chrischall/viator-mcp/compare/v2.0.0...v2.1.0) (2026-09-19)
+
+
+### Features
+
+* **deps:** take mcp-utils 1.0.0 so the server boots a modern instance ([#104](https://github.com/chrischall/viator-mcp/issues/104)) ([88e3915](https://github.com/chrischall/viator-mcp/commit/88e39152349cb07aea561e4c8c9bc34f0a980fcc))
+
 ## [2.0.0](https://github.com/chrischall/viator-mcp/compare/v1.2.3...v2.0.0) (2026-09-19)
 
 
