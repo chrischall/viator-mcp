@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/chrischall/viator-mcp/compare/v2.1.1...v2.1.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **health:** make vt_healthcheck reach Viator on every call ([#111](https://github.com/chrischall/viator-mcp/issues/111)) ([055cb91](https://github.com/chrischall/viator-mcp/commit/055cb91d07bd2c9b3dcfda690ba24817b781e7fb))
+
 ## [2.1.1](https://github.com/chrischall/viator-mcp/compare/v2.1.0...v2.1.1) (2026-09-23)
 
 
