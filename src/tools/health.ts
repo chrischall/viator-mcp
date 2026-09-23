@@ -12,9 +12,11 @@ import { client as defaultClient } from '../client.js';
  * destination" and "this key is not authorised" look identical from a caller's
  * seat, and only one of them is a configuration problem.
  *
- * The probe is `/destinations` with `cache: 'static'` — Viator's reference
- * list, which every partner tier can read and which changes rarely, so repeat
- * checks are served from cache rather than spending API quota.
+ * The probe is a one-pair `POST /exchange-rates` (USD→EUR) with
+ * `cache: 'none'`: every partner tier can read it, the response is a few
+ * hundred bytes, and bypassing the response cache means each check really
+ * reaches api.viator.com. A cached probe would report ok during an outage or
+ * after the key was revoked mid-session — exactly when this tool gets called.
  */
 
 type ReadEnv = (key: string) => string | undefined;
@@ -36,7 +38,7 @@ export function classifyViatorError(err: unknown): { kind: string; hint?: string
 
 export function registerHealthcheckTools(
   server: McpServer,
-  client: Pick<typeof defaultClient, 'get'> = defaultClient,
+  client: Pick<typeof defaultClient, 'post'> = defaultClient,
   /** Seam: injectable so tests need no process env. */
   readEnv: ReadEnv = (k) => readEnvVar(k),
 ): void {
@@ -44,9 +46,10 @@ export function registerHealthcheckTools(
     server,
     prefix: 'vt',
     hostLabel: 'api.viator.com',
-    probePath: '/destinations',
+    probePath: '/exchange-rates',
     resolveCredential: async () => ({ source: readEnv('VIATOR_API_KEY') ? 'VIATOR_API_KEY' : null }),
-    probeFn: () => client.get('/destinations', { cache: 'static' }),
+    probeFn: () =>
+      client.post('/exchange-rates', { sourceCurrencies: ['USD'], targetCurrencies: ['EUR'] }, { cache: 'none' }),
     classifyThrown: classifyViatorError,
   });
 }
