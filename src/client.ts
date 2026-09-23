@@ -51,6 +51,15 @@ export interface ViatorClientOptions {
   sleep?: (ms: number) => Promise<void>;
 }
 
+/**
+ * Per-request options. `cache` picks the response-cache tier; `'none'`
+ * bypasses the cache entirely (no read, no write), so the call always reaches
+ * the upstream API.
+ */
+export interface RequestOptions {
+  cache?: 'dynamic' | 'static' | 'none';
+}
+
 export class ViatorClient {
   private readonly apiKey: string | null;
   private readonly configError: Error | null;
@@ -98,13 +107,13 @@ export class ViatorClient {
   }
 
   /** GET a JSON resource; `path` must already include any query string. */
-  async get<T = unknown>(path: string, opts: { cache?: 'dynamic' | 'static' } = {}): Promise<T> {
+  async get<T = unknown>(path: string, opts: RequestOptions = {}): Promise<T> {
     return this.request<T>('GET', path, undefined, opts);
   }
 
   /** POST a JSON body. Viator's search/read endpoints are POSTs, so responses
    * are cached just like GETs, keyed by path + serialized body. */
-  async post<T = unknown>(path: string, body: unknown, opts: { cache?: 'dynamic' | 'static' } = {}): Promise<T> {
+  async post<T = unknown>(path: string, body: unknown, opts: RequestOptions = {}): Promise<T> {
     return this.request<T>('POST', path, body, opts);
   }
 
@@ -112,7 +121,7 @@ export class ViatorClient {
     method: 'GET' | 'POST',
     path: string,
     body: unknown,
-    opts: { cache?: 'dynamic' | 'static' },
+    opts: RequestOptions,
   ): Promise<T> {
     const key = this.requireKey();
     // POST reads are cached like GETs, so the key includes the serialized body.
@@ -162,6 +171,9 @@ export class ViatorClient {
       return (text.trim() ? JSON.parse(text) : undefined) as T;
     };
 
+    // 'none' neither reads nor writes the cache — for probes that must
+    // actually reach Viator (vt_healthcheck).
+    if (opts.cache === 'none') return load();
     return this.cache.fetchThrough(cacheKey, load, tier) as Promise<T>;
   }
 }

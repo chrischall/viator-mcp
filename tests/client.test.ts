@@ -97,6 +97,20 @@ describe('ViatorClient', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
+  it("bypasses the cache entirely with cache: 'none', even over a warm cached entry", async () => {
+    const fetchImpl = vi.fn().mockImplementation(async () => jsonRes(200, { rates: [] }));
+    const client = makeClient(fetchImpl as unknown as typeof fetch);
+    const body = { sourceCurrencies: ['USD'], targetCurrencies: ['EUR'] };
+    await client.post('/exchange-rates', body, { cache: 'static' });
+    await client.post('/exchange-rates', body, { cache: 'none' });
+    await client.post('/exchange-rates', body, { cache: 'none' });
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    // An uncached call must not populate the cache either.
+    await client.get('/products/tags', { cache: 'none' });
+    await client.get('/products/tags', { cache: 'static' });
+    expect(fetchImpl).toHaveBeenCalledTimes(5);
+  });
+
   it('does not cache when TTL is 0', async () => {
     const fetchImpl = vi.fn().mockImplementation(async () => jsonRes(200, { n: 1 }));
     const client = makeClient(fetchImpl as unknown as typeof fetch, { cacheTtlMs: 0 });
