@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/chrischall/viator-mcp/compare/v2.1.0...v2.1.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **deps:** require zod ^4.6.5 to match @chrischall/mcp-utils 2.4.0 ([#110](https://github.com/chrischall/viator-mcp/issues/110)) ([1bbccc9](https://github.com/chrischall/viator-mcp/commit/1bbccc99a813deb690d00b2fc1880565e7da59fa))
+* **deps:** upgrade @chrischall/mcp-utils to 2.4.0 and @fetchproxy/* to 3.2.0 ([#107](https://github.com/chrischall/viator-mcp/issues/107)) ([926c39f](https://github.com/chrischall/viator-mcp/commit/926c39f37ce671952840fb5485d862a8925e5049))
+
 ## [2.1.0](https://github.com/chrischall/viator-mcp/compare/v2.0.0...v2.1.0) (2026-09-19)
 
 
