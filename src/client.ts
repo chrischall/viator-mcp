@@ -8,6 +8,8 @@ import {
   parseRetryAfterMs,
   formatApiError,
   McpToolError,
+  detectEdgeBlock,
+  EdgeBlockedError,
   type ResponseCache,
 } from '@chrischall/mcp-utils';
 
@@ -154,6 +156,13 @@ export class ViatorClient {
       }
 
       const text = await res.text();
+      // A CDN/WAF refusal page answers 403 (or 429/503) exactly like a
+      // rejected key or a rate limit, but the key was never evaluated. Name it
+      // before the status branches below blame VIATOR_API_KEY.
+      if (!res.ok) {
+        const edge = detectEdgeBlock({ body: text, headers: res.headers, status: res.status });
+        if (edge !== null) throw new EdgeBlockedError(res.status, edge.vendor, { service: SERVICE, method, path });
+      }
       if (res.status === 401 || res.status === 403) {
         throw new McpToolError(
           `${SERVICE} returned ${res.status} — either VIATOR_API_KEY is invalid, or your key's access tier does not include this endpoint (this server targets the Basic Access affiliate tier).`,
