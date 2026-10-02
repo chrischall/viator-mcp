@@ -5,8 +5,9 @@ import {
   readEnvVar,
   readTtlMsEnv,
   createResponseCache,
-  parseRetryAfterMs,
-  formatApiError,
+  createApiClient,
+  ApiError,
+  RequestTimeoutError,
   McpToolError,
   detectEdgeBlock,
   EdgeBlockedError,
@@ -38,6 +39,18 @@ const DEFAULT_CACHE_TTL_MS = 60_000;
 const DEFAULT_STATIC_CACHE_TTL_MS = 3_600_000;
 // Honor Retry-After on 429/503, but never sleep absurdly long inside a tool call.
 const MAX_RETRY_AFTER_MS = 30_000;
+// Delay before the single retry when Viator sends no (parseable) Retry-After.
+const DEFAULT_RETRY_DELAY_MS = 1_000;
+// Viator signals rate limiting with 429 (per-endpoint window) and 503
+// (system-wide concurrency), both carrying Retry-After seconds.
+const RATE_STATUSES = [429, 503];
+const RATE_LIMIT_HINT =
+  'Viator rate-limits each endpoint per rolling 10s window. Space out calls, or rely on the built-in response cache (VIATOR_CACHE_TTL).';
+
+const rateLimitError = (status: number) =>
+  new McpToolError(`${SERVICE} rate limit: still receiving ${status} Too Many Requests after a retry.`, {
+    hint: RATE_LIMIT_HINT,
+  });
 
 export interface ViatorClientOptions {
   /** API key; when the property is absent, read from VIATOR_API_KEY. */
@@ -68,7 +81,7 @@ export class ViatorClient {
   private readonly baseUrl: string;
   private readonly language: string;
   private readonly fetchImpl: typeof fetch;
-  private readonly sleep: (ms: number) => Promise<void>;
+  private readonly sleep: ((ms: number) => Promise<void>) | undefined;
   private readonly cache: ResponseCache;
 
   /**
@@ -78,7 +91,7 @@ export class ViatorClient {
    */
   constructor(opts: ViatorClientOptions = {}) {
     const now = opts.now ?? Date.now;
-    this.sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
+    this.sleep = opts.sleep;
     const cacheTtlMs = opts.cacheTtlMs ?? readTtlMsEnv('VIATOR_CACHE_TTL', DEFAULT_CACHE_TTL_MS);
     const staticCacheTtlMs =
       opts.staticCacheTtlMs ?? readTtlMsEnv('VIATOR_STATIC_CACHE_TTL', DEFAULT_STATIC_CACHE_TTL_MS);
@@ -131,53 +144,13 @@ export class ViatorClient {
     const tier = opts.cache === 'static' ? 'static' : 'dynamic';
 
     const load = async (): Promise<T> => {
-      const headers: Record<string, string> = {
-        'exp-api-key': key,
-        Accept: VERSIONED_JSON,
-        'Accept-Language': this.language,
-      };
-      const init: RequestInit = { method, headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) };
-      if (body !== undefined) {
-        headers['Content-Type'] = VERSIONED_JSON;
-        init.body = JSON.stringify(body);
+      try {
+        return (await this.apiFor(key, method, path).fetchJson(method, path, {
+          ...(body !== undefined ? { body, headers: { 'Content-Type': VERSIONED_JSON } } : {}),
+        })) as T;
+      } catch (err) {
+        throw mapViatorError(err);
       }
-
-      let res = await this.fetchImpl(`${this.baseUrl}${path}`, init);
-      // Viator signals rate limiting with 429 (per-endpoint window) and 503
-      // (system-wide concurrency), both carrying Retry-After seconds. Honor it
-      // once, capped so a tool call never sleeps unreasonably long.
-      if (res.status === 429 || res.status === 503) {
-        const delayMs = parseRetryAfterMs(res.headers.get('retry-after'), {
-          defaultMs: 1000,
-          capMs: MAX_RETRY_AFTER_MS,
-        });
-        await this.sleep(delayMs);
-        res = await this.fetchImpl(`${this.baseUrl}${path}`, init);
-      }
-
-      const text = await res.text();
-      // A CDN/WAF refusal page answers 403 (or 429/503) exactly like a
-      // rejected key or a rate limit, but the key was never evaluated. Name it
-      // before the status branches below blame VIATOR_API_KEY.
-      if (!res.ok) {
-        const edge = detectEdgeBlock({ body: text, headers: res.headers, status: res.status });
-        if (edge !== null) throw new EdgeBlockedError(res.status, edge.vendor, { service: SERVICE, method, path });
-      }
-      if (res.status === 401 || res.status === 403) {
-        throw new McpToolError(
-          `${SERVICE} returned ${res.status} — either VIATOR_API_KEY is invalid, or your key's access tier does not include this endpoint (this server targets the Basic Access affiliate tier).`,
-          { hint: 'Check your key in the Viator partner portal (https://partnerresources.viator.com/).' },
-        );
-      }
-      if (res.status === 429 || res.status === 503) {
-        throw new McpToolError(`${SERVICE} rate limit: still receiving ${res.status} Too Many Requests after a retry.`, {
-          hint: 'Viator rate-limits each endpoint per rolling 10s window. Space out calls, or rely on the built-in response cache (VIATOR_CACHE_TTL).',
-        });
-      }
-      if (!res.ok) {
-        throw new McpToolError(formatApiError(res.status, method, path, text, { service: SERVICE }));
-      }
-      return (text.trim() ? JSON.parse(text) : undefined) as T;
     };
 
     // 'none' neither reads nor writes the cache — for probes that must
@@ -185,6 +158,85 @@ export class ViatorClient {
     if (opts.cache === 'none') return load();
     return this.cache.fetchThrough(cacheKey, load, tier) as Promise<T>;
   }
+
+  /**
+   * A per-request mcp-utils client: a fresh 60s timeout per attempt (bounding
+   * the body read too, and giving the retry its own window — #788), one
+   * Retry-After-honouring retry on 429/503 capped at 30s, the versioned Accept
+   * + Accept-Language base headers, and `exp-api-key` auth.
+   *
+   * Built per request because of one Viator-specific check: a CDN/WAF refusal
+   * page can answer 429 exactly like a real rate limit, but `createApiClient`
+   * discards a 429's body before its `onRateLimited` hook runs. So the fetch
+   * seam reads each 429 body itself, remembers whether it was an edge page,
+   * and hands the client an identical response — the hook then names the
+   * block instead of blaming the rate limit. (403/503 edge pages are detected
+   * by the shared client itself.)
+   */
+  private apiFor(key: string, method: string, path: string) {
+    let edge429: string | null = null;
+    const fetchImpl = this.fetchImpl;
+    return createApiClient({
+      baseUrl: this.baseUrl,
+      serviceName: SERVICE,
+      tokenHeader: 'exp-api-key',
+      getToken: () => key,
+      baseHeaders: { Accept: VERSIONED_JSON, 'Accept-Language': this.language },
+      timeout: REQUEST_TIMEOUT_MS,
+      retry: {
+        count: 1,
+        delayMs: DEFAULT_RETRY_DELAY_MS,
+        statuses: RATE_STATUSES,
+        honorRetryAfter: true,
+        maxRetryAfterMs: MAX_RETRY_AFTER_MS,
+      },
+      fetchImpl: (async (url: string, init: RequestInit) => {
+        const res = await fetchImpl(url, init);
+        if (res.status !== 429) return res;
+        const text = await res.text();
+        edge429 = detectEdgeBlock({ body: text, headers: res.headers, status: 429 })?.vendor ?? null;
+        return new Response(text, { status: res.status, statusText: res.statusText, headers: res.headers });
+      }) as typeof fetch,
+      ...(this.sleep ? { sleep: this.sleep } : {}),
+      onUnauthorized: () => keyError(401),
+      onRateLimited: () =>
+        edge429 !== null
+          ? new EdgeBlockedError(429, edge429, { service: SERVICE, method, path })
+          : rateLimitError(429),
+    });
+  }
+}
+
+const keyError = (status: number) =>
+  new McpToolError(
+    `${SERVICE} returned ${status} — either VIATOR_API_KEY is invalid, or your key's access tier does not include this endpoint (this server targets the Basic Access affiliate tier).`,
+    { hint: 'Check your key in the Viator partner portal (https://partnerresources.viator.com/).' },
+  );
+
+/**
+ * Map the shared client's typed failures back onto the messages the Viator
+ * tools have always surfaced. An {@link EdgeBlockedError} passes through as-is
+ * (the healthcheck branches on it); so does anything already actionable.
+ */
+function mapViatorError(err: unknown): unknown {
+  if (err instanceof McpToolError || err instanceof EdgeBlockedError) return err;
+  if (err instanceof RequestTimeoutError) {
+    return new McpToolError(`${SERVICE} request timed out after ${REQUEST_TIMEOUT_MS / 1000}s.`, {
+      hint: 'Viator was slow to respond. Retry shortly; searches with narrower filters return faster.',
+      cause: err,
+    });
+  }
+  if (err instanceof ApiError) {
+    if (err.status === 403) return keyError(403);
+    if (RATE_STATUSES.includes(err.status)) return rateLimitError(err.status);
+    return new McpToolError(err.message, { cause: err });
+  }
+  // A network failure (fetch's TypeError) or a caller cancellation.
+  const detail = err instanceof Error ? err.message : String(err);
+  return new McpToolError(`${SERVICE} request failed: ${detail}.`, {
+    hint: 'Viator could not be reached. Check connectivity and retry shortly.',
+    cause: err,
+  });
 }
 
 /**

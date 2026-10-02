@@ -17,7 +17,8 @@ header — not `Authorization: Bearer`. Every call also needs
 `Accept-Language`. This is the bearer/direct-API archetype with a thin custom
 client (`src/client.ts`) rather than `createApiClient`, because Viator's read
 endpoints are mostly **POSTs** (cached by path+body) and 429/503 responses carry
-`Retry-After` that the client honors (one retry, capped at 30s). No fetchproxy.
+`Retry-After` that the client honors (one retry, capped at 30s, via mcp-utils
+`createApiClient` with a fresh 60s timeout per attempt). No fetchproxy.
 
 ## Environment
 
@@ -41,7 +42,7 @@ key; the error surfaces on the first tool call (`requireKey()`).
 
 ## Layout
 
-- `src/client.ts` — ViatorClient (headers, cache, Retry-After retry, deferred config) + singleton
+- `src/client.ts` — ViatorClient (createApiClient transport + 429 edge-page check, cache, error mapping, deferred config) + singleton
 - `src/tools/*.ts` — `registerXxxTools(server)` per area; all read-only
 - `src/tools/shared.ts` — zod atoms (ProductCode path-charset guard), currency/sort enums,
   pagination, `prune`/`range`, compact ProductSummary projection (drift-fallback to raw)

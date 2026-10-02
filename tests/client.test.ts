@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { EdgeBlockedError, McpToolError } from '@chrischall/mcp-utils';
 import { ViatorClient } from '../src/client.js';
 
 // ViatorClient falls through to VIATOR_* env vars (VIATOR_API_BASE_URL,
@@ -209,5 +210,143 @@ describe('ViatorClient', () => {
     t = 1500;
     await client.get('/destinations');
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  // ── Error contract, pinned exactly (fleet-audit #1134 moves the transport
+  //    onto mcp-utils createApiClient). ──
+  it('401 and 403 keep the exact key/access-tier message', async () => {
+    for (const status of [401, 403]) {
+      const fetchImpl = vi.fn().mockResolvedValue(jsonRes(status, { code: 'UNAUTHORIZED' }));
+      const client = makeClient(fetchImpl as unknown as typeof fetch);
+      const err = await client.get('/destinations').catch((e) => e);
+      expect(err).toBeInstanceOf(McpToolError);
+      expect(err.message).toBe(
+        `Viator Partner API returned ${status} — either VIATOR_API_KEY is invalid, or your key's access tier does not include this endpoint (this server targets the Basic Access affiliate tier).`,
+      );
+      expect(err.hint).toMatch(/partner portal/);
+    }
+  });
+
+  it('an exhausted 429 or 503 keeps the exact rate-limit message', async () => {
+    for (const status of [429, 503]) {
+      const fetchImpl = vi.fn().mockImplementation(async () => jsonRes(status, {}));
+      const client = makeClient(fetchImpl as unknown as typeof fetch);
+      const err = await client.get('/destinations').catch((e) => e);
+      expect(err).toBeInstanceOf(McpToolError);
+      expect(err.message).toBe(`Viator Partner API rate limit: still receiving ${status} Too Many Requests after a retry.`);
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+    }
+  });
+
+  it('other non-2xx keep the exact formatApiError message (no retry)', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonRes(400, { message: 'Invalid destination id' }));
+    const client = makeClient(fetchImpl as unknown as typeof fetch);
+    const err = await client.post('/products/search?x=1', {}).catch((e) => e);
+    expect(err).toBeInstanceOf(McpToolError);
+    expect(err.message).toBe('Viator Partner API error 400 for POST /products/search?x=1: {"message":"Invalid destination id"}');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends exactly one versioned Content-Type on POST', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonRes(200, {}));
+    const client = makeClient(fetchImpl as unknown as typeof fetch);
+    await client.post('/products/search', { a: 1 });
+    const init = fetchImpl.mock.calls[0]![1] as RequestInit;
+    const h = new Headers(init.headers);
+    expect(h.get('content-type')).toBe('application/json;version=2.0');
+    expect(h.get('accept')).toBe('application/json;version=2.0');
+    expect(init.body).toBe('{"a":1}');
+  });
+
+  it('names a CDN/WAF 429 page as an edge block even after the retry', async () => {
+    const page = '<html><title>Attention Required! | Cloudflare</title>cf-ray</html>';
+    const fetchImpl = vi
+      .fn()
+      .mockImplementation(async () => new Response(page, { status: 429, headers: { 'cf-mitigated': 'challenge' } }));
+    const client = makeClient(fetchImpl as unknown as typeof fetch);
+    const err = await client.get('/destinations').catch((e) => e);
+    expect(err).toBeInstanceOf(EdgeBlockedError);
+    expect(err.status).toBe(429);
+  });
+
+  it('wraps a network failure in an actionable McpToolError (#788)', async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
+    const client = makeClient(fetchImpl as unknown as typeof fetch);
+    const err = await client.get('/destinations').catch((e) => e);
+    expect(err).toBeInstanceOf(McpToolError);
+    expect(err.message).toBe('Viator Partner API request failed: fetch failed.');
+  });
+
+  describe('timing (fake timers)', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('waits exactly the Retry-After before the single retry', async () => {
+      vi.useFakeTimers();
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(jsonRes(503, {}, { 'Retry-After': '5' }))
+        .mockResolvedValueOnce(jsonRes(200, { ok: true }));
+      const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch });
+      const pending = client.get('/destinations');
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(pending).resolves.toEqual({ ok: true });
+    });
+
+    it('caps a huge Retry-After at 30s', async () => {
+      vi.useFakeTimers();
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(jsonRes(429, {}, { 'Retry-After': '9999' }))
+        .mockResolvedValueOnce(jsonRes(200, { ok: true }));
+      const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch });
+      const pending = client.get('/destinations');
+      await vi.advanceTimersByTimeAsync(29_999);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(pending).resolves.toEqual({ ok: true });
+    });
+
+    it('times a hung request out at 60s as an actionable McpToolError (#788)', async () => {
+      vi.useFakeTimers();
+      const fetchImpl = vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+          }),
+      );
+      const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch });
+      const pending = client.get('/destinations').catch((e) => e);
+      await vi.advanceTimersByTimeAsync(59_999);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      const err = await pending;
+      expect(err).toBeInstanceOf(McpToolError);
+      expect(err.message).toBe('Viator Partner API request timed out after 60s.');
+    });
+
+    // #788: the retry used to inherit the first attempt's timeout signal. A
+    // slow 503 (35s) + Retry-After: 30 aborted the retry before it was sent.
+    it('gives the retry its own fresh 60s window after a slow first attempt', async () => {
+      vi.useFakeTimers();
+      let n = 0;
+      const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
+        n += 1;
+        if (n === 1) {
+          await new Promise((r) => setTimeout(r, 35_000));
+          return jsonRes(503, {}, { 'Retry-After': '30' });
+        }
+        expect(init.signal?.aborted).toBe(false);
+        return jsonRes(200, { ok: true });
+      });
+      const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch });
+      const pending = client.get('/destinations');
+      await vi.advanceTimersByTimeAsync(35_000 + 30_000);
+      await expect(pending).resolves.toEqual({ ok: true });
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+    });
   });
 });
