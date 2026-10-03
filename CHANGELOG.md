@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.6](https://github.com/chrischall/viator-mcp/compare/v2.1.5...v2.1.6) (2026-10-03)
+
+
+### Bug Fixes
+
+* **deps:** bump dotenv ([#128](https://github.com/chrischall/viator-mcp/issues/128)) ([12c967c](https://github.com/chrischall/viator-mcp/commit/12c967c01e47559dfa36f431fc3396b0e0b112d6))
+
 ## [2.1.5](https://github.com/chrischall/viator-mcp/compare/v2.1.4...v2.1.5) (2026-10-03)
 
 
