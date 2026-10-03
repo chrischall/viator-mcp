@@ -9,7 +9,6 @@ import {
   ApiError,
   RequestTimeoutError,
   McpToolError,
-  detectEdgeBlock,
   EdgeBlockedError,
   type ResponseCache,
 } from '@chrischall/mcp-utils';
@@ -83,6 +82,7 @@ export class ViatorClient {
   private readonly fetchImpl: typeof fetch;
   private readonly sleep: ((ms: number) => Promise<void>) | undefined;
   private readonly cache: ResponseCache;
+  private readonly api: ReturnType<typeof createApiClient>;
 
   /**
    * Defer the config error so the server still boots (and answers the host's
@@ -114,6 +114,7 @@ export class ViatorClient {
       this.configError = null;
     }
     this.fetchImpl = opts.fetchImpl ?? fetch;
+    this.api = this.buildApi();
   }
 
   private requireKey(): string {
@@ -138,14 +139,14 @@ export class ViatorClient {
     body: unknown,
     opts: RequestOptions,
   ): Promise<T> {
-    const key = this.requireKey();
+    this.requireKey();
     // POST reads are cached like GETs, so the key includes the serialized body.
     const cacheKey = `${method} ${path}${body === undefined ? '' : ' ' + JSON.stringify(body)}`;
     const tier = opts.cache === 'static' ? 'static' : 'dynamic';
 
     const load = async (): Promise<T> => {
       try {
-        return (await this.apiFor(key, method, path).fetchJson(method, path, {
+        return (await this.api.fetchJson(method, path, {
           ...(body !== undefined ? { body, headers: { 'Content-Type': VERSIONED_JSON } } : {}),
         })) as T;
       } catch (err) {
@@ -160,27 +161,23 @@ export class ViatorClient {
   }
 
   /**
-   * A per-request mcp-utils client: a fresh 60s timeout per attempt (bounding
-   * the body read too, and giving the retry its own window — #788), one
-   * Retry-After-honouring retry on 429/503 capped at 30s, the versioned Accept
-   * + Accept-Language base headers, and `exp-api-key` auth.
+   * The mcp-utils client, built once: a fresh 60s timeout per attempt
+   * (bounding the body read too, and giving the retry its own window — #788),
+   * one Retry-After-honouring retry on 429/503 capped at 30s, the versioned
+   * Accept + Accept-Language base headers, and `exp-api-key` auth.
    *
-   * Built per request because of one Viator-specific check: a CDN/WAF refusal
-   * page can answer 429 exactly like a real rate limit, but `createApiClient`
-   * discards a 429's body before its `onRateLimited` hook runs. So the fetch
-   * seam reads each 429 body itself, remembers whether it was an edge page,
-   * and hands the client an identical response — the hook then names the
-   * block instead of blaming the rate limit. (403/503 edge pages are detected
-   * by the shared client itself.)
+   * A CDN/WAF refusal page can answer 429 exactly like a real rate limit; the
+   * shared client reads the final 429 and hands `onRateLimited` its edge-block
+   * verdict (mcp-utils 2.13.0), so the hook names the block instead of blaming
+   * the rate limit. (403/503 edge pages are detected by the shared client
+   * itself.)
    */
-  private apiFor(key: string, method: string, path: string) {
-    let edge429: string | null = null;
-    const fetchImpl = this.fetchImpl;
+  private buildApi() {
     return createApiClient({
       baseUrl: this.baseUrl,
       serviceName: SERVICE,
       tokenHeader: 'exp-api-key',
-      getToken: () => key,
+      getToken: () => this.requireKey(),
       baseHeaders: { Accept: VERSIONED_JSON, 'Accept-Language': this.language },
       timeout: REQUEST_TIMEOUT_MS,
       retry: {
@@ -190,19 +187,13 @@ export class ViatorClient {
         honorRetryAfter: true,
         maxRetryAfterMs: MAX_RETRY_AFTER_MS,
       },
-      fetchImpl: (async (url: string, init: RequestInit) => {
-        const res = await fetchImpl(url, init);
-        if (res.status !== 429) return res;
-        const text = await res.text();
-        edge429 = detectEdgeBlock({ body: text, headers: res.headers, status: 429 })?.vendor ?? null;
-        return new Response(text, { status: res.status, statusText: res.statusText, headers: res.headers });
-      }) as typeof fetch,
+      fetchImpl: this.fetchImpl,
       ...(this.sleep ? { sleep: this.sleep } : {}),
       onUnauthorized: () => keyError(401),
-      onRateLimited: () =>
-        edge429 !== null
-          ? new EdgeBlockedError(429, edge429, { service: SERVICE, method, path })
-          : rateLimitError(429),
+      onRateLimited: ({ status, edgeBlock, method, path }) =>
+        edgeBlock !== null
+          ? new EdgeBlockedError(status, edgeBlock.vendor, { service: SERVICE, method, path })
+          : rateLimitError(status),
     });
   }
 }
