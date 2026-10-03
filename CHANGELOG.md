@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.5](https://github.com/chrischall/viator-mcp/compare/v2.1.4...v2.1.5) (2026-10-03)
+
+
+### Bug Fixes
+
+* **deps:** adopt @chrischall/mcp-utils 2.12.0 createApiClient for Viator requests ([#124](https://github.com/chrischall/viator-mcp/issues/124)) ([18d00bd](https://github.com/chrischall/viator-mcp/commit/18d00bd8be6999a58221fdc9dfe2eb13a6cb64c0))
+* **deps:** adopt @chrischall/mcp-utils 2.13.0 rate-limit context for edge-block 429s ([#125](https://github.com/chrischall/viator-mcp/issues/125)) ([ae206b2](https://github.com/chrischall/viator-mcp/commit/ae206b2bb4d3500ffea033e4d2c3c1bbfae32ad3))
+* **deps:** bump @chrischall/mcp-utils to 2.10.0 ([#122](https://github.com/chrischall/viator-mcp/issues/122)) ([6522802](https://github.com/chrischall/viator-mcp/commit/6522802cf8ddd09be638f53fc462490eadc1b499))
+* report CDN/WAF blocks as edge_blocked, not a rejected credential (mcp-utils 2.9.0) ([#120](https://github.com/chrischall/viator-mcp/issues/120)) ([a4fc3b8](https://github.com/chrischall/viator-mcp/commit/a4fc3b8719aee1e1c6f0d3d883a76dc3ec09af13))
+
 ## [2.1.4](https://github.com/chrischall/viator-mcp/compare/v2.1.3...v2.1.4) (2026-09-26)
 
 
