@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.7](https://github.com/chrischall/viator-mcp/compare/v2.1.6...v2.1.7) (2026-10-07)
+
+
+### Bug Fixes
+
+* **deps:** bump @chrischall/mcp-utils to 2.15.0 so confirmation prompts can be disabled for clients that never show them ([#131](https://github.com/chrischall/viator-mcp/issues/131)) ([96caa21](https://github.com/chrischall/viator-mcp/commit/96caa216bcb69856f37cd6199f98e6a76f6ca070))
+
 ## [2.1.6](https://github.com/chrischall/viator-mcp/compare/v2.1.5...v2.1.6) (2026-10-05)
 
 
