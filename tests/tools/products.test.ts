@@ -115,14 +115,54 @@ describe('product tools', () => {
     await h.close();
   });
 
-  it('vt_search_products falls back to the raw response on drift', async () => {
-    vi.spyOn(client, 'post').mockResolvedValue({ unexpected: 'shape' });
+  // fleet-audit#792: the compact rung must not balloon to full size on drift —
+  // the fallback media-strips, the same posture as vt_search_freetext.
+  it('vt_search_products media-strips the raw response on drift', async () => {
+    vi.spyOn(client, 'post').mockResolvedValue({ unexpected: 'shape', avatar: 'https://cdn/a.png' });
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const h = await createTestHarness(registerProductTools);
     const res = await h.callTool('vt_search_products', { destination: '357' });
     const data = parseToolResult<Record<string, unknown>>(res);
     expect(data).toEqual({ unexpected: 'shape' });
     expect(errSpy).toHaveBeenCalled();
+    await h.close();
+  });
+
+  // fleet-audit#793: malformed dates/prices/ranges are schema errors the agent
+  // can self-correct from, not a wasted request and an opaque Viator 400.
+  it.each([
+    ['a datetime start_date', { start_date: '2026-10-05T00:00' }],
+    ['a natural-language end_date', { end_date: 'next Friday' }],
+    ['an impossible calendar date', { start_date: '2026-02-30' }],
+    ['a negative lowest_price', { lowest_price: -5 }],
+    ['a negative highest_price', { highest_price: -1 }],
+    ['a negative min_duration_minutes', { min_duration_minutes: -30 }],
+    ['a negative max_duration_minutes', { max_duration_minutes: -30 }],
+    ['lowest_price above highest_price', { lowest_price: 200, highest_price: 100 }],
+    ['start_date after end_date', { start_date: '2026-09-01', end_date: '2026-08-01' }],
+    ['min_rating above max_rating', { min_rating: 4.5, max_rating: 3 }],
+    ['min_duration above max_duration', { min_duration_minutes: 480, max_duration_minutes: 60 }],
+  ])('vt_search_products rejects %s before calling Viator', async (_label, args) => {
+    const post = vi.spyOn(client, 'post').mockResolvedValue({ products: [], totalCount: 0 });
+    const h = await createTestHarness(registerProductTools);
+    const res = await h.callTool('vt_search_products', { destination: '357', ...args });
+    expect(res.isError).toBe(true);
+    expect(post).not.toHaveBeenCalled();
+    await h.close();
+  });
+
+  it('vt_search_products accepts equal range ends and zero prices', async () => {
+    const post = vi.spyOn(client, 'post').mockResolvedValue({ products: [], totalCount: 0 });
+    const h = await createTestHarness(registerProductTools);
+    const res = await h.callTool('vt_search_products', {
+      destination: '357',
+      lowest_price: 0,
+      highest_price: 0,
+      start_date: '2026-08-01',
+      end_date: '2026-08-01',
+    });
+    expect(res.isError).toBeFalsy();
+    expect(post).toHaveBeenCalledOnce();
     await h.close();
   });
 

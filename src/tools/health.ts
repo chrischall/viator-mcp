@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { readEnvVar, EdgeBlockedError } from '@chrischall/mcp-utils';
 import { registerCredentialHealthcheckTool } from '@chrischall/mcp-utils/healthcheck';
-import { client as defaultClient } from '../client.js';
+import { client as defaultClient, ViatorKeyError } from '../client.js';
 
 /**
  * `vt_healthcheck` — the one call that answers "is this connector working?",
@@ -25,9 +25,10 @@ export function classifyViatorError(err: unknown): { kind: string; hint?: string
   // A CDN/WAF block quotes its 403 too; leave it to the helper's edge_blocked
   // arm rather than calling the key rejected.
   if (err instanceof EdgeBlockedError) return undefined;
-  const msg = err instanceof Error ? err.message : String(err);
-
-  if (/401|403|unauthorized|forbidden/i.test(msg)) {
+  // Classify on the client's typed 401/403 error only. Matching '401'/'403'
+  // anywhere in the message misread upstream 5xx bodies (trace ids, WAF pages
+  // saying "forbidden") as a rejected key (fleet-audit#790).
+  if (err instanceof ViatorKeyError) {
     return {
       kind: 'credential_rejected',
       hint:
