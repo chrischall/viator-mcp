@@ -214,6 +214,10 @@ export class ViatorClient {
         honorRetryAfter: true,
         maxRetryAfterMs: MAX_RETRY_AFTER_MS,
       },
+      // Every Viator endpoint this server calls is a read — the POSTs are
+      // searches — so a timed-out or dropped POST is safe to retry and keeps
+      // the read error, not mcp-utils 3.0's WriteOutcomeUnknownError.
+      writeOutcomeUnknown: false,
       fetchImpl: this.fetchImpl,
       sleep: this.sleep ?? cancellableSleep,
       onUnauthorized: () => keyError(401),
