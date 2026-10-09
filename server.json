@@ -24,6 +24,13 @@
           "isSecret": true
         },
         {
+          "name": "VIATOR_API_BASE_URL",
+          "description": "API host (default production; set https://api.sandbox.viator.com/partner for a sandbox key)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
           "name": "VIATOR_LANGUAGE",
           "description": "Accept-Language for response text, e.g. en-US, es, fr, de, ja (default en-US)",
           "isRequired": false,

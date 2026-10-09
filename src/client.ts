@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import {
   loadDotenvSafely,
   readEnvVar,
+  requireEnvVar,
   readTtlMsEnv,
   createResponseCache,
   createApiClient,
@@ -101,6 +102,20 @@ export interface RequestOptions {
   cache?: 'dynamic' | 'static' | 'none';
 }
 
+/**
+ * VIATOR_API_KEY is REQUIRED — every Partner API request carries it — so it is
+ * read with requireEnvVar. The throw is caught here only to keep config
+ * deferred: the server still boots and answers tools/list without a key, and
+ * the actionable McpToolError surfaces on the first tool call (requireKey()).
+ */
+function readRequiredKey(): string | undefined {
+  try {
+    return requireEnvVar('VIATOR_API_KEY');
+  } catch {
+    return undefined;
+  }
+}
+
 export class ViatorClient {
   private readonly apiKey: string | null;
   private readonly configError: Error | null;
@@ -130,7 +145,7 @@ export class ViatorClient {
     this.language = opts.language ?? readEnvVar('VIATOR_LANGUAGE') ?? 'en-US';
     // `'apiKey' in opts` (not `?? readEnvVar(...)`) so tests can force the
     // missing-key path with an explicit undefined even when .env has a key.
-    const key = 'apiKey' in opts ? opts.apiKey : readEnvVar('VIATOR_API_KEY');
+    const key = 'apiKey' in opts ? opts.apiKey : readRequiredKey();
     if (!key) {
       this.apiKey = null;
       this.configError = new McpToolError('VIATOR_API_KEY environment variable is required', {
