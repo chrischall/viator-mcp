@@ -198,11 +198,24 @@ export class ViatorClient {
   }
 }
 
-const keyError = (status: number) =>
-  new McpToolError(
-    `${SERVICE} returned ${status} — either VIATOR_API_KEY is invalid, or your key's access tier does not include this endpoint (this server targets the Basic Access affiliate tier).`,
-    { hint: 'Check your key in the Viator partner portal (https://partnerresources.viator.com/).' },
-  );
+/**
+ * Viator refused the key (401/403). A typed error carrying the status, so the
+ * healthcheck classifies on it rather than on a '401'/'403' substring that an
+ * upstream 5xx body or trace id can contain too (fleet-audit#790).
+ */
+export class ViatorKeyError extends McpToolError {
+  readonly status: 401 | 403;
+  constructor(status: 401 | 403) {
+    super(
+      `${SERVICE} returned ${status} — either VIATOR_API_KEY is invalid, or your key's access tier does not include this endpoint (this server targets the Basic Access affiliate tier).`,
+      { hint: 'Check your key in the Viator partner portal (https://partnerresources.viator.com/).' },
+    );
+    this.name = 'ViatorKeyError';
+    this.status = status;
+  }
+}
+
+const keyError = (status: 401 | 403) => new ViatorKeyError(status);
 
 /**
  * Map the shared client's typed failures back onto the messages the Viator

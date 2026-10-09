@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createTestHarness, parseToolResult } from '@chrischall/mcp-utils/test';
 import { registerHealthcheckTools } from '../src/tools/health.js';
+import { ViatorKeyError } from '../src/client.js';
 
 function setup(env: Record<string, string | undefined>, probe?: () => Promise<unknown>) {
   const post = vi.fn(probe ?? (async () => ({ rates: [] })));
@@ -68,9 +69,40 @@ describe('vt_healthcheck', () => {
 
   // A sandbox key against production is refused exactly like an invalid one.
   it('mentions the sandbox/production split when the key is rejected', async () => {
-    const out = await setup(FULL, async () => { throw new Error('HTTP 403 Forbidden'); }).call();
+    const out = await setup(FULL, async () => { throw new ViatorKeyError(403); }).call();
     expect(out.error.kind).toBe('credential_rejected');
     expect(out.hint).toMatch(/sandbox/i);
+  });
+
+  // fleet-audit#790: classify on the client's typed key error, not on any
+  // '401'/'403'/'forbidden' substring of an upstream body.
+  it.each([
+    ['a real 401 from the client', 401],
+    ['a real 403 from the client', 403],
+  ])('classifies %s as credential_rejected end to end', async (_label, status) => {
+    const { ViatorClient } = await import('../src/client.js');
+    const fetchImpl = vi.fn(async () => new Response('{"code":"X"}', { status }));
+    const client = new ViatorClient({ apiKey: 'K', fetchImpl: fetchImpl as unknown as typeof fetch, sleep: async () => {} });
+    const h = await createTestHarness((s) => registerHealthcheckTools(s, client, (k: string) => FULL[k as 'VIATOR_API_KEY']));
+    expect(parseToolResult<any>(await h.callTool('vt_healthcheck')).error.kind).toBe('credential_rejected');
+  });
+
+  it.each([
+    ['a 500 whose body carries a trace id containing 4031', 500, '{"message":"internal error","trace":"7f4031ab"}'],
+    ['a 502 WAF page saying forbidden', 502, '<html>Request forbidden by upstream gateway</html>'],
+  ])('does not call %s a rejected key', async (_label, status, body) => {
+    const { ViatorClient } = await import('../src/client.js');
+    const fetchImpl = vi.fn(async () => new Response(body, { status }));
+    const client = new ViatorClient({ apiKey: 'K', fetchImpl: fetchImpl as unknown as typeof fetch, sleep: async () => {} });
+    const h = await createTestHarness((s) => registerHealthcheckTools(s, client, (k: string) => FULL[k as 'VIATOR_API_KEY']));
+    const out = parseToolResult<any>(await h.callTool('vt_healthcheck'));
+    expect(out.ok).toBe(false);
+    expect(out.error.kind).not.toBe('credential_rejected');
+  });
+
+  it('does not classify a bare message that merely mentions 403', async () => {
+    const out = await setup(FULL, async () => { throw new Error('HTTP 403 Forbidden'); }).call();
+    expect(out.error.kind).not.toBe('credential_rejected');
   });
 
   it('leaves an unrecognised failure to the helper defaults', async () => {
@@ -81,7 +113,8 @@ describe('vt_healthcheck', () => {
 
   it('classifies a non-Error throw without crashing', async () => {
     const out = await setup(FULL, async () => { throw 'HTTP 401 Unauthorized'; }).call();
-    expect(out.error.kind).toBe('credential_rejected');
+    expect(out.ok).toBe(false);
+    expect(out.error.kind).not.toBe('credential_rejected');
   });
 
   it('reads the real environment when no reader is injected', async () => {
