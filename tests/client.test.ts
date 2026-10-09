@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { EdgeBlockedError, McpToolError } from '@chrischall/mcp-utils';
+import { EdgeBlockedError, McpToolError, withCallSignal } from '@chrischall/mcp-utils';
 import { ViatorClient } from '../src/client.js';
 
 // ViatorClient falls through to VIATOR_* env vars (VIATOR_API_BASE_URL,
@@ -378,5 +378,58 @@ describe('ViatorClient', () => {
       await expect(pending).resolves.toEqual({ ok: true });
       expect(fetchImpl).toHaveBeenCalledTimes(2);
     });
+  });
+});
+
+// fleet-audit#789: a cancelled tool call must stop holding the request — the
+// in-flight fetch AND the Retry-After sleep — instead of spending the
+// per-endpoint rate-limit budget on a result nobody will read.
+describe('ViatorClient cancellation', () => {
+  it('passes the tool call\'s cancellation to fetch', async () => {
+    const ctrl = new AbortController();
+    const fetchImpl = vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_res, rej) => {
+          init.signal?.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+        }),
+    );
+    const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch, cacheTtlMs: 0 });
+    const pending = withCallSignal(ctrl.signal, () => client.post('/products/search', { a: 1 }));
+    await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+    ctrl.abort();
+    await expect(pending).rejects.toThrow();
+  });
+
+  it('abandons the Retry-After sleep and does not retry once the call is cancelled', async () => {
+    const ctrl = new AbortController();
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonRes(429, { code: 'TOO_MANY_REQUESTS' }, { 'Retry-After': '30' }));
+    // No injected sleep: the real default must be the abortable one.
+    const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch, cacheTtlMs: 0 });
+    const started = Date.now();
+    const pending = withCallSignal(ctrl.signal, () => client.post('/products/search', { a: 1 }));
+    await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+    ctrl.abort();
+    await expect(pending).rejects.toThrow();
+    expect(Date.now() - started).toBeLessThan(2_000);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('still sleeps out Retry-After and retries when nothing cancels', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(jsonRes(429, { code: 'TOO_MANY_REQUESTS' }, { 'Retry-After': '2' }))
+        .mockResolvedValueOnce(jsonRes(200, { ok: true }));
+      const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch, cacheTtlMs: 0 });
+      const pending = client.post('/products/search', { a: 1 });
+      await vi.advanceTimersByTimeAsync(2_000);
+      await expect(pending).resolves.toEqual({ ok: true });
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

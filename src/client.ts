@@ -10,6 +10,7 @@ import {
   RequestTimeoutError,
   McpToolError,
   EdgeBlockedError,
+  currentCallSignal,
   type ResponseCache,
 } from '@chrischall/mcp-utils';
 
@@ -50,6 +51,32 @@ const rateLimitError = (status: number) =>
   new McpToolError(`${SERVICE} rate limit: still receiving ${status} Too Many Requests after a retry.`, {
     hint: RATE_LIMIT_HINT,
   });
+
+/**
+ * The Retry-After wait, abandoned the moment the tool call is cancelled.
+ *
+ * The in-flight fetch already honours cancellation: mcp-utils makes the call's
+ * signal ambient and createApiClient hands it to fetch. Its default sleep does
+ * not, so a cancelled call would still hold for up to MAX_RETRY_AFTER_MS before
+ * giving up (fleet-audit#789). Rejecting with the signal's reason ends the
+ * attempt without a retry request.
+ */
+function cancellableSleep(ms: number): Promise<void> {
+  const signal = currentCallSignal();
+  if (!signal) return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(signal.reason);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal.reason);
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
 
 export interface ViatorClientOptions {
   /** API key; when the property is absent, read from VIATOR_API_KEY. */
@@ -188,7 +215,7 @@ export class ViatorClient {
         maxRetryAfterMs: MAX_RETRY_AFTER_MS,
       },
       fetchImpl: this.fetchImpl,
-      ...(this.sleep ? { sleep: this.sleep } : {}),
+      sleep: this.sleep ?? cancellableSleep,
       onUnauthorized: () => keyError(401),
       onRateLimited: ({ status, edgeBlock, method, path }) =>
         edgeBlock !== null
