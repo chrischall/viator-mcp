@@ -84,8 +84,8 @@ projection written against Viator's documented shapes:
   duration, confirmation type, flags, booking URL and cover image — and nothing
   else. (`vt_search_freetext` projects only its PRODUCTS block; its attraction
   and destination results are media-stripped instead.) If Viator's shape drifts,
-  the projection falls back to the raw response rather than emitting an empty
-  one.
+  the projection falls back to the raw response, media-stripped, rather than
+  emitting an empty one.
 - The other eight — `vt_get_product`, `vt_list_product_tags`,
   `vt_search_attractions`, `vt_get_attraction`, `vt_get_availability_schedule`,
   `vt_list_destinations`, `vt_get_locations` and `vt_get_exchange_rates` — strip

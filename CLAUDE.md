@@ -76,7 +76,8 @@ worse than a generic one.
   release-please owns versions across package.json/manifest.json/server.json/.claude-plugin.
 - Never commit secrets; `.env` is gitignored.
 - Compact projections key off documented fields only; on drift, warn to stderr and
-  return the raw response (never an empty projection).
+  return the raw response media-stripped (never an empty projection, never an
+  unstripped payload on the compact rung).
 - Live verification: `node scripts/live-probe.mjs` probes all 10 endpoints through the built
   client. Sandbox keys need `VIATOR_API_BASE_URL=https://api.sandbox.viator.com/partner`;
   results and quirks (count clamping vs 400s) are recorded in docs/VIATOR-API.md.

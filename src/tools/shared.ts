@@ -111,13 +111,17 @@ export function compactProduct(p: any): CompactProduct {
 /**
  * Apply the compact projection to a `{ products, totalCount }` envelope. When
  * the response doesn't have the expected array (undocumented APIs drift), warn
- * to stderr and return the RAW response rather than an empty/wrong projection.
+ * to stderr and return the raw response media-stripped rather than an
+ * empty/wrong projection — still the compact rung, so it must not balloon to
+ * every image variant URL of every product.
  */
 export function compactProductsEnvelope(data: unknown): unknown {
   const d = data as { products?: unknown; totalCount?: number };
   if (!Array.isArray(d?.products)) {
-    console.error('[viator-mcp] /products/search response did not contain a products array; returning raw response');
-    return data;
+    console.error(
+      '[viator-mcp] /products/search response did not contain a products array; media-stripping the raw response instead of projecting it',
+    );
+    return stripMediaUrls(data);
   }
   return { totalCount: d.totalCount, products: d.products.map(compactProduct) };
 }

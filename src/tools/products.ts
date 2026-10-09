@@ -19,7 +19,7 @@ import {
 /** This tool's compact rung is a real projection, so its note names the fields. */
 const SEARCH_VIEW_NOTE =
   `compact (default) projects each result down to its ${COMPACT_PRODUCT_FIELDS}, ` +
-  'falling back to the raw response if Viator\'s shape drifts; "full" returns Viator\'s payload untouched.';
+  'falling back to the media-stripped raw response if Viator\'s shape drifts; "full" returns Viator\'s payload untouched.';
 
 export function registerProductTools(server: McpServer): void {
   server.registerTool(

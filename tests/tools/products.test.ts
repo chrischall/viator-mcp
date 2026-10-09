@@ -115,8 +115,10 @@ describe('product tools', () => {
     await h.close();
   });
 
-  it('vt_search_products falls back to the raw response on drift', async () => {
-    vi.spyOn(client, 'post').mockResolvedValue({ unexpected: 'shape' });
+  // fleet-audit#792: the compact rung must not balloon to full size on drift —
+  // the fallback media-strips, the same posture as vt_search_freetext.
+  it('vt_search_products media-strips the raw response on drift', async () => {
+    vi.spyOn(client, 'post').mockResolvedValue({ unexpected: 'shape', avatar: 'https://cdn/a.png' });
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const h = await createTestHarness(registerProductTools);
     const res = await h.callTool('vt_search_products', { destination: '357' });
