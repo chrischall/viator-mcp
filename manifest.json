@@ -36,6 +36,7 @@
       ],
       "env": {
         "VIATOR_API_KEY": "${user_config.viator_api_key}",
+        "VIATOR_API_BASE_URL": "${user_config.viator_api_base_url}",
         "VIATOR_LANGUAGE": "${user_config.viator_language}",
         "VIATOR_CACHE_TTL": "${user_config.viator_cache_ttl}",
         "VIATOR_STATIC_CACHE_TTL": "${user_config.viator_static_cache_ttl}"
@@ -49,6 +50,13 @@
       "description": "Your Viator Partner API key (exp-api-key). Sign up as a Viator affiliate — Basic Access is free (partnerresources.viator.com).",
       "required": true,
       "sensitive": true
+    },
+    "viator_api_base_url": {
+      "type": "string",
+      "title": "API Base URL",
+      "description": "API host (default production; set https://api.sandbox.viator.com/partner for a sandbox key)",
+      "required": false,
+      "sensitive": false
     },
     "viator_language": {
       "type": "string",
