@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.1.8](https://github.com/chrischall/viator-mcp/compare/v2.1.7...v2.1.8) (2026-10-09)
+
+
+### Bug Fixes
+
+* annotate tools truthfully and sync manifests with the served tools ([#137](https://github.com/chrischall/viator-mcp/issues/137)) ([c8e936f](https://github.com/chrischall/viator-mcp/commit/c8e936f748bae5f6bae7765a37f761e212537f1a))
+* declare the plugin MCP config under the mcpServers key Claude Code reads ([#138](https://github.com/chrischall/viator-mcp/issues/138)) ([589b081](https://github.com/chrischall/viator-mcp/commit/589b0810145aef041b87fa8a31aa6adf3fab0266))
+* **deps:** bump source-map-js ([#136](https://github.com/chrischall/viator-mcp/issues/136)) ([9853023](https://github.com/chrischall/viator-mcp/commit/98530231cbdde4c83c779d05a391b988c21cda77))
+* **deps:** update @chrischall/mcp-utils to 3.0.0 ([#135](https://github.com/chrischall/viator-mcp/issues/135)) ([cd0a648](https://github.com/chrischall/viator-mcp/commit/cd0a6485502e40f9e65781e8bb26e65ced0e910f))
+* resolve low-severity audit findings ([#133](https://github.com/chrischall/viator-mcp/issues/133)) ([221af8f](https://github.com/chrischall/viator-mcp/commit/221af8facf388ef8fb85a6ab81b6bf564cad2762))
+
 ## [2.1.7](https://github.com/chrischall/viator-mcp/compare/v2.1.6...v2.1.7) (2026-10-07)
 
 
