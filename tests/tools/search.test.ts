@@ -27,6 +27,23 @@ describe('freetext search tool', () => {
     await h.close();
   });
 
+  // fleet-audit#793
+  it.each([
+    ['a datetime start_date', { start_date: '2026-10-05T00:00' }],
+    ['a natural-language end_date', { end_date: 'next Friday' }],
+    ['a negative min_price', { min_price: -1 }],
+    ['a negative max_price', { max_price: -1 }],
+    ['min_price above max_price', { min_price: 50, max_price: 10 }],
+    ['start_date after end_date', { start_date: '2026-09-01', end_date: '2026-08-01' }],
+  ])('rejects %s before calling Viator', async (_label, args) => {
+    const post = vi.spyOn(client, 'post').mockResolvedValue({ products: { totalCount: 0, results: [] } });
+    const h = await createTestHarness(registerSearchTools);
+    const res = await h.callTool('vt_search_freetext', { search_term: 'rome', ...args });
+    expect(res.isError).toBe(true);
+    expect(post).not.toHaveBeenCalled();
+    await h.close();
+  });
+
   it('includes productFiltering only when a product filter is set', async () => {
     const post = vi.spyOn(client, 'post').mockResolvedValue({});
     const h = await createTestHarness(registerSearchTools);

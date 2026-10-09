@@ -25,6 +25,36 @@ export const CURRENCIES = [
 export const PRODUCT_SORTS = ['DEFAULT', 'PRICE', 'TRAVELER_RATING', 'ITINERARY_DURATION', 'DATE_ADDED'] as const;
 export const SORT_ORDERS = ['ASCENDING', 'DESCENDING'] as const;
 
+/**
+ * A calendar date, `YYYY-MM-DD` (zod's ISO date: a real date, so `2026-02-30`
+ * fails too). A datetime or "next Friday" is a schema error the agent can fix,
+ * not an opaque Viator 400 spent against the per-endpoint rate limit.
+ */
+export const IsoDate = z.iso.date();
+
+/** A price filter in the request currency — never negative. */
+export const Price = z.number().nonnegative();
+
+/** A duration filter in whole minutes — never negative. */
+export const DurationMinutes = z.number().int().nonnegative();
+
+/**
+ * Reject `[low, high]` field pairs where both ends are set and low > high.
+ * ISO dates compare correctly as strings, so the same check covers dates.
+ * Use with `.superRefine(orderedRanges([...]))` on a tool's input object.
+ */
+export function orderedRanges(pairs: ReadonlyArray<readonly [string, string]>) {
+  return (args: Record<string, unknown>, ctx: z.RefinementCtx): void => {
+    for (const [lo, hi] of pairs) {
+      const a = args[lo] as number | string | undefined;
+      const b = args[hi] as number | string | undefined;
+      if (a !== undefined && b !== undefined && a > b) {
+        ctx.addIssue({ code: 'custom', path: [lo], message: `${lo} must not be greater than ${hi}` });
+      }
+    }
+  };
+}
+
 /** Shared pagination knobs — Viator pagination is 1-based { start, count }. */
 export const paginationParams = {
   start: z.number().int().min(1).default(1).describe('1-based index of the first result to return'),

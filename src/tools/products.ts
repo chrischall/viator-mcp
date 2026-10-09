@@ -14,6 +14,10 @@ import {
   range,
   compactProductsEnvelope,
   COMPACT_PRODUCT_FIELDS,
+  IsoDate,
+  Price,
+  DurationMinutes,
+  orderedRanges,
 } from './shared.js';
 
 /** This tool's compact rung is a real projection, so its note names the fields. */
@@ -35,21 +39,28 @@ export function registerProductTools(server: McpServer): void {
           .array(z.string())
           .optional()
           .describe('Product flags, e.g. FREE_CANCELLATION, LIKELY_TO_SELL_OUT, PRIVATE_TOUR'),
-        lowest_price: z.number().optional().describe('Minimum from-price (in currency)'),
-        highest_price: z.number().optional().describe('Maximum from-price (in currency)'),
-        start_date: z.string().optional().describe('Only products operating on/after this date (YYYY-MM-DD)'),
-        end_date: z.string().optional().describe('Only products operating on/before this date (YYYY-MM-DD)'),
+        lowest_price: Price.optional().describe('Minimum from-price (in currency)'),
+        highest_price: Price.optional().describe('Maximum from-price (in currency)'),
+        start_date: IsoDate.optional().describe('Only products operating on/after this date (YYYY-MM-DD)'),
+        end_date: IsoDate.optional().describe('Only products operating on/before this date (YYYY-MM-DD)'),
         min_rating: z.number().min(0).max(5).optional().describe('Minimum average traveler rating (0-5)'),
         max_rating: z.number().min(0).max(5).optional().describe('Maximum average traveler rating (0-5)'),
-        min_duration_minutes: z.number().int().optional().describe('Minimum product duration in minutes'),
-        max_duration_minutes: z.number().int().optional().describe('Maximum product duration in minutes'),
+        min_duration_minutes: DurationMinutes.optional().describe('Minimum product duration in minutes'),
+        max_duration_minutes: DurationMinutes.optional().describe('Maximum product duration in minutes'),
         sort: z.enum(PRODUCT_SORTS).optional().describe('Sort key (default: DEFAULT — Viator relevance)'),
         order: z.enum(SORT_ORDERS).optional().describe('Sort direction'),
         ...paginationParams,
         ...currencyParam,
         ...campaignParam,
         view: viewArg(SEARCH_VIEW_NOTE),
-      }),
+      }).superRefine(
+        orderedRanges([
+          ['lowest_price', 'highest_price'],
+          ['start_date', 'end_date'],
+          ['min_rating', 'max_rating'],
+          ['min_duration_minutes', 'max_duration_minutes'],
+        ]),
+      ),
     },
     async (args) => {
       const filtering = prune({

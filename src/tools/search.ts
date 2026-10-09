@@ -12,6 +12,9 @@ import {
   range,
   compactFreetextEnvelope,
   COMPACT_PRODUCT_FIELDS,
+  IsoDate,
+  Price,
+  orderedRanges,
 } from './shared.js';
 
 const SEARCH_TYPES = ['PRODUCTS', 'ATTRACTIONS', 'DESTINATIONS'] as const;
@@ -41,18 +44,23 @@ export function registerSearchTools(server: McpServer): void {
           .default(['PRODUCTS'])
           .describe('Which result types to return (default: PRODUCTS only)'),
         destination: z.string().optional().describe('Restrict product results to a destination id'),
-        min_price: z.number().optional().describe('Minimum product from-price (in currency)'),
-        max_price: z.number().optional().describe('Maximum product from-price (in currency)'),
+        min_price: Price.optional().describe('Minimum product from-price (in currency)'),
+        max_price: Price.optional().describe('Maximum product from-price (in currency)'),
         min_rating: z.number().min(0).max(5).optional().describe('Minimum average traveler rating (0-5)'),
-        start_date: z.string().optional().describe('Only products operating on/after this date (YYYY-MM-DD)'),
-        end_date: z.string().optional().describe('Only products operating on/before this date (YYYY-MM-DD)'),
+        start_date: IsoDate.optional().describe('Only products operating on/after this date (YYYY-MM-DD)'),
+        end_date: IsoDate.optional().describe('Only products operating on/before this date (YYYY-MM-DD)'),
         sort: z.enum(PRODUCT_SORTS).optional().describe('Product sort key'),
         order: z.enum(SORT_ORDERS).optional().describe('Sort direction'),
         start: z.number().int().min(1).default(1).describe('1-based index of the first result (per type)'),
         count: z.number().int().min(1).max(50).default(10).describe('Results per page per type (max 50; default 10)'),
         ...currencyParam,
         ...campaignParam,
-      }),
+      }).superRefine(
+        orderedRanges([
+          ['min_price', 'max_price'],
+          ['start_date', 'end_date'],
+        ]),
+      ),
     },
     async (args) => {
       const productFiltering = prune({
