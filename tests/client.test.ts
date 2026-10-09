@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { EdgeBlockedError, McpToolError, withCallSignal } from '@chrischall/mcp-utils';
+import { EdgeBlockedError, McpToolError, withCallSignal, WriteOutcomeUnknownError } from '@chrischall/mcp-utils';
 import { ViatorClient } from '../src/client.js';
 
 // ViatorClient falls through to VIATOR_* env vars (VIATOR_API_BASE_URL,
@@ -307,6 +307,14 @@ describe('ViatorClient', () => {
     expect(err.message).toBe('Viator Partner API request failed: fetch failed.');
   });
 
+  it('maps a network failure on a POST search to the read error, not a write-outcome-unknown (mcp-utils 3.0)', async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
+    const client = makeClient(fetchImpl as unknown as typeof fetch);
+    const err = await client.post('/products/search', { filtering: {} }).catch((e) => e);
+    expect(err).not.toBeInstanceOf(WriteOutcomeUnknownError);
+    expect(err.message).toBe('Viator Partner API request failed: fetch failed.');
+  });
+
   describe('timing (fake timers)', () => {
     afterEach(() => {
       vi.useRealTimers();
@@ -355,6 +363,22 @@ describe('ViatorClient', () => {
       await vi.advanceTimersByTimeAsync(1);
       const err = await pending;
       expect(err).toBeInstanceOf(McpToolError);
+      expect(err.message).toBe('Viator Partner API request timed out after 60s.');
+    });
+
+    it('times a hung POST search out as the read timeout, not a write-outcome-unknown (mcp-utils 3.0)', async () => {
+      vi.useFakeTimers();
+      const fetchImpl = vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+          }),
+      );
+      const client = new ViatorClient({ apiKey: 'k', fetchImpl: fetchImpl as unknown as typeof fetch });
+      const pending = client.post('/products/search', { filtering: {} }).catch((e) => e);
+      await vi.advanceTimersByTimeAsync(60_000);
+      const err = await pending;
+      expect(err).not.toBeInstanceOf(WriteOutcomeUnknownError);
       expect(err.message).toBe('Viator Partner API request timed out after 60s.');
     });
 
