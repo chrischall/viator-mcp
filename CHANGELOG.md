@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.9](https://github.com/chrischall/viator-mcp/compare/v2.1.8...v2.1.9) (2026-10-10)
+
+
+### Bug Fixes
+
+* **deps:** bump the production-dependencies group with 2 updates ([#140](https://github.com/chrischall/viator-mcp/issues/140)) ([7c5b4d9](https://github.com/chrischall/viator-mcp/commit/7c5b4d9d103444cd200cd369c9b73c7c286aae15))
+
 ## [2.1.8](https://github.com/chrischall/viator-mcp/compare/v2.1.7...v2.1.8) (2026-10-09)
 
 
