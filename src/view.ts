@@ -1,4 +1,4 @@
-import { minifiedResult, resolveView, stripMediaUrls, viewParam, type View } from '@chrischall/mcp-utils';
+import { createViewKit } from '@chrischall/mcp-utils';
 
 /**
  * The rungs this server honours (`@chrischall/mcp-utils`' `view` vocabulary;
@@ -48,27 +48,14 @@ const MEDIA_NOTE =
   'No field projection on this tool — every other field comes back as Viator sent it.';
 
 /**
- * The `view` parameter a read tool takes. Pass `note` on a tool whose compact
- * rung is a field projection, so the schema says what that tool actually keeps.
- */
-export const viewArg = (note: string = MEDIA_NOTE): ReturnType<typeof viewParam> =>
-  viewParam(VIATOR_VIEWS, { note });
-
-/**
- * Answer in the requested rung.
- *
- * `project` is the tool's own field projection, run INSTEAD of media stripping
- * (see the rule in the docblock above); omit it and compact media-strips.
+ * `viewArg(note?)` — the `view` parameter a read tool takes; pass `note` on a
+ * tool whose compact rung is a field projection, so the schema says what that
+ * tool actually keeps. `viewResponse(view, data, project?)` — answer in the
+ * requested rung, running `project` INSTEAD of media stripping on compact.
+ * Both come from `@chrischall/mcp-utils`' `createViewKit`, which owns the
+ * projection-is-not-media-stripped rule (fleet-audit#1348).
  *
  * Only ever called from a READ tool. A write's response is a receipt — an id,
  * a status — with nothing to strip and everything to keep.
  */
-export function viewResponse(
-  view: string | undefined,
-  data: unknown,
-  project?: (data: unknown) => unknown,
-): ReturnType<typeof minifiedResult> {
-  const rung: View = resolveView(view, VIATOR_VIEWS);
-  if (rung !== 'compact') return minifiedResult(data);
-  return minifiedResult(project ? project(data) : stripMediaUrls(data));
-}
+export const { viewArg, viewResponse } = createViewKit(VIATOR_VIEWS, { note: MEDIA_NOTE });
