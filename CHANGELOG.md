@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.10](https://github.com/chrischall/viator-mcp/compare/v2.1.9...v2.1.10) (2026-10-17)
+
+
+### Refactor
+
+* **view:** build the view rungs with mcp-utils createViewKit ([#145](https://github.com/chrischall/viator-mcp/issues/145)) ([d3c145b](https://github.com/chrischall/viator-mcp/commit/d3c145b219b729a5e62f8b3a1a90fc3939d1d781))
+
 ## [2.1.9](https://github.com/chrischall/viator-mcp/compare/v2.1.8...v2.1.9) (2026-10-16)
 
 
