@@ -41,3 +41,16 @@ egress:
     # Dialled only when VIATOR_API_BASE_URL points at the sandbox
     # (https://api.sandbox.viator.com/partner) to test with a sandbox key.
     - api.sandbox.viator.com
+examples:
+  - prompt: >-
+      Find highly rated food tours in Lisbon under $100 per person and show me
+      the top few with prices and booking links.
+    note: Searches products by destination with price and rating filters
+  - prompt: >-
+      What tours include the Colosseum underground, and what does the best
+      rated one include and cost?
+    note: Free-text search, then full product details
+  - prompt: >-
+      When is the Colosseum underground tour available next month, what are
+      the start times, and what is the adult price in US dollars?
+    note: Free-text search, availability schedule, then exchange-rate conversion
