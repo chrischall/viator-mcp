@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.11](https://github.com/chrischall/viator-mcp/compare/v2.1.10...v2.1.11) (2026-10-19)
+
+
+### Bug Fixes
+
+* **deps:** bump dotenv ([#149](https://github.com/chrischall/viator-mcp/issues/149)) ([dadb6b4](https://github.com/chrischall/viator-mcp/commit/dadb6b41b7973bf849283bf0a0c9be693aa8f7d2))
+
+
+### Documentation
+
+* **mint:** add sample prompts for the public catalog ([#152](https://github.com/chrischall/viator-mcp/issues/152)) ([1cdbb80](https://github.com/chrischall/viator-mcp/commit/1cdbb8087a193af6b8224d953c165560c879e169))
+
 ## [2.1.10](https://github.com/chrischall/viator-mcp/compare/v2.1.9...v2.1.10) (2026-10-17)
 
 
