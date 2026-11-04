@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
+import { travelMeta } from './hints.js';
 import { AttractionId, campaignParam, qs, prune } from './shared.js';
 
 /** Sort keys documented for attraction search (live-verify pending). */
@@ -14,6 +15,7 @@ export function registerAttractionTools(server: McpServer): void {
       description:
         'List attractions (landmarks, museums, points of interest) in a Viator destination, including the product codes mapped to each attraction. Use vt_list_destinations to find destination ids.',
       annotations: { readOnlyHint: true, openWorldHint: true },
+      _meta: travelMeta({ aliases: ['attractions', 'landmarks', 'sights', 'museums', 'points of interest'] }),
       inputSchema: z.object({
         view: viewArg(),
         destination_id: z.number().int().positive().describe('Destination id (from vt_list_destinations)'),
@@ -40,6 +42,7 @@ export function registerAttractionTools(server: McpServer): void {
       description:
         'Get details for one Viator attraction by id — name, destination, opening hours, review summary, mapped product codes, and the attraction URL.',
       annotations: { readOnlyHint: true, openWorldHint: true },
+      _meta: travelMeta({ aliases: ['opening hours', 'attraction'] }),
       inputSchema: z.object({
         view: viewArg(),
         attraction_id: AttractionId.describe('Viator attraction id'),

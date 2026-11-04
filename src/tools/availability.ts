@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
+import { travelMeta } from './hints.js';
 import { ProductCode } from './shared.js';
 
 export function registerAvailabilityTools(server: McpServer): void {
@@ -11,6 +12,7 @@ export function registerAvailabilityTools(server: McpServer): void {
       description:
         'Get the availability schedule and pricing for a Viator product — seasons, days of week, start times, unavailable dates, and per-age-band pricing for every product option. NOTE: prices are in the SUPPLIER\'s currency (see the currency field); convert with vt_get_exchange_rates.',
       annotations: { readOnlyHint: true, openWorldHint: true },
+      _meta: travelMeta({ aliases: ['availability', 'start times', 'tour times', 'tour price'] }),
       inputSchema: z.object({
         view: viewArg(),
         product_code: ProductCode.describe('Viator product code, e.g. 5010SYDNEY'),

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { viewArg, viewResponse } from '../view.js';
 import { client } from '../client.js';
+import { SEARCH_META } from './hints.js';
 import {
   PRODUCT_SORTS,
   SORT_ORDERS,
@@ -35,6 +36,7 @@ export function registerSearchTools(server: McpServer): void {
       description:
         'Free-text search across Viator products, attractions, and destinations (e.g. "colosseum underground tour"). The fastest way to find things when you don\'t have a destination id yet.',
       annotations: { readOnlyHint: true, openWorldHint: true },
+      _meta: SEARCH_META,
       inputSchema: z.object({
         view: viewArg(FREETEXT_VIEW_NOTE),
         search_term: z.string().min(1).describe('Free-text search term'),
