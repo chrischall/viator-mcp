@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.2.0](https://github.com/chrischall/viator-mcp/compare/v2.1.10...v2.2.0) (2026-11-04)
+
+
+### Features
+
+* context-group hints ([#157](https://github.com/chrischall/viator-mcp/issues/157)) ([7ee4314](https://github.com/chrischall/viator-mcp/commit/7ee431447a9f42d90555c1dfd85d14cee22f0446))
+
+
+### Bug Fixes
+
+* **deps:** bump @chrischall/mcp-utils ([#154](https://github.com/chrischall/viator-mcp/issues/154)) ([0b7102f](https://github.com/chrischall/viator-mcp/commit/0b7102faf69f9e0fd4c50b72bb3e3cf276c9d8a0))
+* **deps:** bump dotenv ([#149](https://github.com/chrischall/viator-mcp/issues/149)) ([dadb6b4](https://github.com/chrischall/viator-mcp/commit/dadb6b41b7973bf849283bf0a0c9be693aa8f7d2))
+* **deps:** bump the production-dependencies group with 3 updates ([#156](https://github.com/chrischall/viator-mcp/issues/156)) ([0b802b1](https://github.com/chrischall/viator-mcp/commit/0b802b1311116c6c7cf8d14a6d565ccbe269d191))
+
+
+### Documentation
+
+* **mint:** add sample prompts for the public catalog ([#152](https://github.com/chrischall/viator-mcp/issues/152)) ([1cdbb80](https://github.com/chrischall/viator-mcp/commit/1cdbb8087a193af6b8224d953c165560c879e169))
+
 ## [2.1.10](https://github.com/chrischall/viator-mcp/compare/v2.1.9...v2.1.10) (2026-10-17)
 
 
