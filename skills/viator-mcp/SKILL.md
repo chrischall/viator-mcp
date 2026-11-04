@@ -100,6 +100,22 @@ parameter.
 nothing — zod drops the unknown key and you get the compact rung regardless,
 which is what the flag used to ask for.)
 
+## In context groups
+
+This server joins the **travel** group (mcp-host context groups; every tool except
+`vt_healthcheck` carries a `_meta.mint` hint, all of them `lookup`).
+
+- **No canonical read.** Viator's affiliate tier is a public catalogue — it holds no
+  bookings, no itinerary and nothing of the person's own — so it answers no *what's new*,
+  *what's due* or *what's on* ask, and the group does not fan one out to it. It has no
+  subjects either: the catalogue's destinations are not the person's.
+- **Where it helps:** an ask that names a place, like "what's on our trip this weekend,
+  and are there any food tours in Lisbon?" — the group answers the trip from the other
+  travel sources, and the tour half is a `vt_search_products` (or `vt_search_freetext`)
+  lookup, whose hint names `start_date`/`end_date` so a spoken range fills them.
+- **No browser needed:** the upstream is a keyed REST API, so this source never answers
+  "needs your browser open".
+
 ## Notes
 
 - Prices from `vt_search_products`/`vt_search_freetext` are in the requested `currency`;
