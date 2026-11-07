@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/chrischall/viator-mcp/compare/v2.2.0...v2.2.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* **deps:** bump @chrischall/mcp-utils ([#159](https://github.com/chrischall/viator-mcp/issues/159)) ([777a8fa](https://github.com/chrischall/viator-mcp/commit/777a8fa20a776c3b6a6fe593518c28e4b38218f3))
+
 ## [2.2.0](https://github.com/chrischall/viator-mcp/compare/v2.1.10...v2.2.0) (2026-11-04)
 
 
